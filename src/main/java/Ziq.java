@@ -27,6 +27,23 @@ public class Ziq {
                int index = Integer.parseInt(input.substring(7)) - 1;
                list[index].unmark();
                System.out.println("OK, I've marked this task as not done yet:\n " + list[index]);
+           } else if (input.startsWith("todo ")) {
+               list[listCount] = new Todo(input.substring(5));
+               listCount++;
+               System.out.println("Got it. I've added this task:\n " + list[listCount-1]);
+               System.out.println("Now you have " + listCount + " tasks in the list.");
+           } else if (input.startsWith("deadline ")) {
+               String[] parts = input.substring(9).split(" /by ");
+               list[listCount] = new Deadline(parts[0], parts[1]);
+               listCount++;
+               System.out.println("Got it. I've added this task:\n " + list[listCount-1]);
+               System.out.println("Now you have " + listCount + " tasks in the list.");
+           } else if (input.startsWith("event ")) {
+               String[] parts = input.substring(6).split(" /from | /to ");
+               list[listCount] = new Event(parts[0], parts[1], parts[2]);
+               listCount++;
+               System.out.println("Got it. I've added this task:\n " + list[listCount-1]);
+               System.out.println("Now you have " + listCount + " tasks in the list.");
            }
            else {
                System.out.println("added " + input);
