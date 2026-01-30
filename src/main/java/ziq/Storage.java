@@ -1,3 +1,5 @@
+package ziq;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -5,13 +7,28 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Scanner;
 
+/**
+ * Handles loading and saving tasks to/from a file.
+ * Manages persistent storage of task data.
+ */
 public class Storage {
     private final String filePath;
 
+    /**
+     * Constructs a Storage instance with the specified file path.
+     *
+     * @param filePath the path to the file where tasks are stored
+     */
     public Storage(String filePath) {
         this.filePath = filePath;
     }
 
+    /**
+     * Loads tasks from the storage file.
+     *
+     * @return a list of tasks loaded from the file, or an empty list if file doesn't exist
+     * @throws ZiqException if there is an error reading or parsing the file
+     */
     public ArrayList<Task> load() throws ZiqException {
         ArrayList<Task> loadedList = new ArrayList<>();
         File f = new File(filePath);
@@ -46,6 +63,11 @@ public class Storage {
         return loadedList;
     }
 
+    /**
+     * Saves the list of tasks to the storage file.
+     *
+     * @param list the list of tasks to save
+     */
     public void save(ArrayList<Task> list) {
         try {
             File f = new File(filePath);

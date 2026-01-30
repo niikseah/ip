@@ -1,5 +1,11 @@
+package ziq;
+
 import java.nio.file.Paths;
 
+/**
+ * Main class for the Ziq task management application.
+ * Handles initialization and execution of the application.
+ */
 public class Ziq {
 
     private static final String FILE_PATH = Paths.get(".", "data", "ziq.txt").toString();
@@ -9,6 +15,11 @@ public class Ziq {
     private Ui ui;
     private Parser parser;
 
+    /**
+     * Constructs a new Ziq instance with the specified file path for storage.
+     *
+     * @param filePath the path to the file where tasks are stored
+     */
     public Ziq(String filePath) {
         ui = new Ui();
         storage = new Storage(filePath);
@@ -20,6 +31,9 @@ public class Ziq {
         }
     }
 
+    /**
+     * Runs the main application loop, processing user commands until exit.
+     */
     public void run() {
         ui.welcomeUser();
         boolean isDone = false;
@@ -35,6 +49,11 @@ public class Ziq {
         System.out.println("buh-bye!");
     }
 
+    /**
+     * Entry point for the Ziq application.
+     *
+     * @param args command line arguments (not used)
+     */
     public static void main(String[] args) {
         new Ziq(FILE_PATH).run();
     }
