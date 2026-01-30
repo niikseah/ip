@@ -4,9 +4,14 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 
 public class Ziq {
     private static final String FILE_PATH = Paths.get(".", "data", "ziq.txt").toString();
+    private static final DateTimeFormatter INPUT_FORMAT = DateTimeFormatter.ofPattern("d/MM/yyyy HHmm");
+    public static final DateTimeFormatter OUTPUT_FORMAT = DateTimeFormatter.ofPattern("MMM dd yyyy, h:mm");
 
     public static void main(String[] args) {
         System.out.println("Hello, I'm Ziq!\n" + "What can I do for you?\n");
@@ -47,7 +52,7 @@ public class Ziq {
                     System.out.println("You got " + list.size() + " tasks in the list.");
                 } else if (input.startsWith("event ")) {
                     String[] parts = input.substring(6).split(" /from | /to ");
-                    list.add(new Event(parts[0], parts[1], parts[2]));
+                    list.add(new Event(parts[0], LocalDateTime.parse(parts[1], INPUT_FORMAT), LocalDateTime.parse(parts[2], INPUT_FORMAT)));
                     saveTasks(list);
                     System.out.println("Oki, added,,,\n " + list.get(list.size() - 1));
                     System.out.println("You got " + list.size() + " tasks in the list.");
@@ -115,10 +120,10 @@ public class Ziq {
                         task = new Todo(parts[2]);
                         break;
                     case DEADLINE:
-                        task = new Deadline(parts[2], parts[3]);
+                        task = new Deadline(parts[2], LocalDateTime.parse(parts[3]));
                         break;
                     case EVENT:
-                        task = new Event(parts[2], parts[3], parts[4]);
+                        task = new Event(parts[2], LocalDateTime.parse(parts[3]), LocalDateTime.parse(parts[4]));
                         break;
                 }
 
@@ -145,6 +150,7 @@ public class Ziq {
             throw new ZiqException("deadline must have '/by <time>'.");
         }
         String[] parts = input.substring(9).split(" /by ");
-        return new Deadline(parts[0], parts[1]);
+        LocalDateTime time = LocalDateTime.parse(parts[1], INPUT_FORMAT);
+        return new Deadline(parts[0], time);
     }
 }
