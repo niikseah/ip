@@ -1,21 +1,18 @@
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-
 public class Deadline extends Task {
 
-    protected LocalDateTime by;
+    protected String by;
 
-    public Deadline(String description, LocalDateTime by) {
+    public Deadline(String description, String by) {
         super(description);
         this.by = by;
     }
 
-    public LocalDateTime by() {
+    public String by() {
         return this.by;
     }
 
     @Override
     public String toString() {
-        return "[D]" + super.toString() + " (by: " + by.format(Ziq.OUTPUT_FORMAT) + ")";
+        return "[D]" + super.toString() + " (by: " + by + ")";
     }
 }
