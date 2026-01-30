@@ -17,6 +17,6 @@ public enum TaskType {
                 return t;
             }
         }
-        throw new ZiqException("what kind of task is this?");
+        throw new ZiqException("Unknown task type in file.");
     }
 }
