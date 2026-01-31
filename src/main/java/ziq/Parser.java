@@ -6,7 +6,7 @@ import java.time.format.DateTimeParseException;
 
 /**
  * Parses and executes user commands.
- * Handles all command types: todo, deadline, event, mark, unmark, delete, list, bye.
+ * Handles all command types: todo, deadline, event, mark, unmark, delete, list, find, bye.
  */
 public class Parser {
 
@@ -47,8 +47,10 @@ public class Parser {
             handleEvent(trimmedInput, tasks, ui, storage);
         } else if (trimmedInput.startsWith("delete ")) {
             handleDelete(trimmedInput, tasks, ui, storage);
+        } else if (trimmedInput.startsWith("find ")) {
+            handleFind(trimmedInput, tasks);
         } else {
-            throw new ZiqException("idk lol,,, only the following commands work: todo, deadline, or event!");
+            throw new ZiqException("idk lol,,, only the following commands work: todo, deadline, event, or find!");
         }
 
         return false;
@@ -167,6 +169,32 @@ public class Parser {
             System.out.println("Now you have " + tasks.size() + " tasks in the list.");
         } catch (NumberFormatException e) {
             throw new ZiqException("the provided number is invalid...");
+        }
+    }
+
+    /**
+     * Handles the find command to list tasks whose description contains the given keyword.
+     *
+     * @param input the user's input command (e.g. "find book")
+     * @param tasks the task list to search
+     */
+    private static void handleFind(String input, TaskList tasks) {
+        if (input.length() <= 5) {
+            System.out.println("Here is your To-Do list!");
+            for (int i = 0; i < tasks.size(); i++) {
+                System.out.println((i + 1) + ". " + tasks.get(i));
+            }
+            return;
+        }
+        String keyword = input.substring(5).trim().toLowerCase();
+        System.out.println("Here are the matching tasks in your list:");
+        int count = 0;
+        for (int i = 0; i < tasks.size(); i++) {
+            Task t = tasks.get(i);
+            if (t.description().toLowerCase().contains(keyword)) {
+                count++;
+                System.out.println(count + ". " + t);
+            }
         }
     }
 
