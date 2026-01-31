@@ -1,12 +1,28 @@
+package ziq;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
+/**
+ * Parses and executes user commands.
+ * Handles all command types: todo, deadline, event, mark, unmark, delete, list, bye.
+ */
 public class Parser {
 
     private static final DateTimeFormatter INPUT_FORMAT = DateTimeFormatter.ofPattern("d/M/yyyy HHmm");
     public static final DateTimeFormatter OUTPUT_FORMAT = DateTimeFormatter.ofPattern("MMM dd yyyy, h:mm a");
 
+    /**
+     * Parses and executes a user command.
+     *
+     * @param input the user's input command
+     * @param tasks the task list to modify
+     * @param ui the UI handler for output
+     * @param storage the storage handler for saving tasks
+     * @return true if the command is "bye" (exit), false otherwise
+     * @throws ZiqException if the command is invalid or cannot be executed
+     */
     public static boolean executeCommand(String input, TaskList tasks, Ui ui, Storage storage) throws ZiqException {
         String trimmedInput = input.trim();
 
@@ -38,6 +54,16 @@ public class Parser {
         return false;
     }
 
+    /**
+     * Handles mark and unmark commands.
+     *
+     * @param input the user's input command
+     * @param tasks the task list to modify
+     * @param ui the UI handler for output
+     * @param storage the storage handler for saving tasks
+     * @param isMark true to mark as done, false to unmark
+     * @throws ZiqException if the task index is invalid
+     */
     private static void handleMark(String input, TaskList tasks, Ui ui, Storage storage, boolean isMark) throws ZiqException {
         try {
             int index = Integer.parseInt(input.split(" ")[1]) - 1;
@@ -56,6 +82,15 @@ public class Parser {
         }
     }
 
+    /**
+     * Handles the todo command to add a new todo task.
+     *
+     * @param input the user's input command
+     * @param tasks the task list to modify
+     * @param ui the UI handler for output
+     * @param storage the storage handler for saving tasks
+     * @throws ZiqException if the description is empty
+     */
     private static void handleTodo(String input, TaskList tasks, Ui ui, Storage storage) throws ZiqException {
         if (input.length() <= 5) throw new ZiqException("description of ToDo cannot be empty");
         Task t = new Todo(input.substring(5));
@@ -64,6 +99,15 @@ public class Parser {
         printAdded(t, tasks.size());
     }
 
+    /**
+     * Handles the deadline command to add a new deadline task.
+     *
+     * @param input the user's input command
+     * @param tasks the task list to modify
+     * @param ui the UI handler for output
+     * @param storage the storage handler for saving tasks
+     * @throws ZiqException if the format is invalid or the date cannot be parsed
+     */
     private static void handleDeadline(String input, TaskList tasks, Ui ui, Storage storage) throws ZiqException {
         if (!input.contains(" /by ")) throw new ZiqException("deadline must have '/by dd/mm/yyyy HHmm.'");
         try {
@@ -78,6 +122,15 @@ public class Parser {
         }
     }
 
+    /**
+     * Handles the event command to add a new event task.
+     *
+     * @param input the user's input command
+     * @param tasks the task list to modify
+     * @param ui the UI handler for output
+     * @param storage the storage handler for saving tasks
+     * @throws ZiqException if the format is invalid or the dates cannot be parsed
+     */
     private static void handleEvent(String input, TaskList tasks, Ui ui, Storage storage) throws ZiqException {
         if (!input.contains(" /from ") || !input.contains(" /to ")) {
             throw new ZiqException("event needs '/from' and '/to' time.");
@@ -95,6 +148,15 @@ public class Parser {
         }
     }
 
+    /**
+     * Handles the delete command to remove a task.
+     *
+     * @param input the user's input command
+     * @param tasks the task list to modify
+     * @param ui the UI handler for output
+     * @param storage the storage handler for saving tasks
+     * @throws ZiqException if the task index is invalid
+     */
     private static void handleDelete(String input, TaskList tasks, Ui ui, Storage storage) throws ZiqException {
         try {
             int index = Integer.parseInt(input.substring(7)) - 1;
@@ -108,6 +170,12 @@ public class Parser {
         }
     }
 
+    /**
+     * Prints a message indicating a task has been added.
+     *
+     * @param t the task that was added
+     * @param size the new total number of tasks
+     */
     private static void printAdded(Task t, int size) {
         System.out.println("task added");
         System.out.println("  " + t);
