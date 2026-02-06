@@ -13,14 +13,17 @@ import java.util.Scanner;
  */
 public class Storage {
     private final String filePath;
+    private final Ui ui;
 
     /**
-     * Constructs a Storage instance with the specified file path.
+     * Constructs a Storage instance with the specified file path and UI for messages.
      *
      * @param filePath the path to the file where tasks are stored
+     * @param ui the UI for output (e.g. save error messages)
      */
-    public Storage(String filePath) {
+    public Storage(String filePath, Ui ui) {
         this.filePath = filePath;
+        this.ui = ui;
     }
 
     /**
@@ -89,7 +92,7 @@ public class Storage {
             }
             fw.close();
         } catch (IOException e) {
-            System.out.println("oop. could not save tasks.");
+            ui.printLine("oop. could not save tasks.");
         }
     }
 }
