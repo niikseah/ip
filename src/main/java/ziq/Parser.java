@@ -24,6 +24,10 @@ public class Parser {
      * @throws ZiqException if the command is invalid or cannot be executed
      */
     public static boolean executeCommand(String input, TaskList tasks, Ui ui, Storage storage) throws ZiqException {
+        assert input != null : "input must not be null";
+        assert tasks != null : "tasks must not be null";
+        assert ui != null : "ui must not be null";
+        assert storage != null : "storage must not be null";
         String trimmedInput = input.trim();
 
         if (trimmedInput.equalsIgnoreCase("bye")) {
