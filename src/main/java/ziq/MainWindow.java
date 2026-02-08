@@ -42,6 +42,10 @@ public class MainWindow extends AnchorPane {
         }
     }
 
+    /**
+     * Initializes the main window: loads user and Ziq images, sets up scroll listener,
+     * and adds the initial greeting dialog.
+     */
     @FXML
     public void initialize() {
         userImage = loadImage("/images/user.jpg");
