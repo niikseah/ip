@@ -45,18 +45,22 @@ public class Storage {
                 TaskType type = TaskType.fromCode(parts[0]);
                 Task task = null;
                 switch (type) {
-                    case TODO:
-                        task = new Todo(parts[2]);
-                        break;
-                    case DEADLINE:
-                        task = new Deadline(parts[2], LocalDateTime.parse(parts[3]));
-                        break;
-                    case EVENT:
-                        task = new Event(parts[2], LocalDateTime.parse(parts[3]), LocalDateTime.parse(parts[4]));
-                        break;
+                case TODO:
+                    task = new Todo(parts[2]);
+                    break;
+                case DEADLINE:
+                    task = new Deadline(parts[2], LocalDateTime.parse(parts[3]));
+                    break;
+                case EVENT:
+                    task = new Event(parts[2], LocalDateTime.parse(parts[3]), LocalDateTime.parse(parts[4]));
+                    break;
+                default:
+                    break;
                 }
                 if (task != null) {
-                    if (parts[1].equals("1")) task.markAsDone();
+                    if (parts[1].equals("1")) {
+                        task.markAsDone();
+                    }
                     loadedList.add(task);
                 }
             }
@@ -74,18 +78,21 @@ public class Storage {
     public void save(ArrayList<Task> list) {
         try {
             File f = new File(filePath);
-            if (f.getParentFile() != null) f.getParentFile().mkdirs();
+            if (f.getParentFile() != null) {
+                f.getParentFile().mkdirs();
+            }
             FileWriter fw = new FileWriter(f);
             for (Task t : list) {
-                TaskType type = (t instanceof Todo) ? TaskType.TODO :
-                        (t instanceof Deadline) ? TaskType.DEADLINE : TaskType.EVENT;
+                TaskType type = (t instanceof Todo)
+                        ? TaskType.TODO
+                        : (t instanceof Deadline)
+                        ? TaskType.DEADLINE
+                        : TaskType.EVENT;
                 String isDone = t.getStatus().equals("X") ? "1" : "0";
                 String line = type.getCode() + " | " + isDone + " | " + t.description();
-                if (t instanceof Deadline)
-                {
+                if (t instanceof Deadline) {
                     line += " | " + ((Deadline) t).by();
-                }
-                else if (t instanceof Event) {
+                } else if (t instanceof Event) {
                     line += " | " + ((Event) t).from() + " | " + ((Event) t).to();
                 }
                 fw.write(line + System.lineSeparator());

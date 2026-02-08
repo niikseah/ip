@@ -26,12 +26,14 @@ public class TaskList {
     }
 
     /**
-     * Adds a task to the list.
+     * Adds one or more tasks to the list.
      *
-     * @param t the task to add
+     * @param t the task(s) to add (varargs)
      */
-    public void add(Task t) {
-        tasks.add(t);
+    public void add(Task... t) {
+        for (Task task : t) {
+            tasks.add(task);
+        }
     }
 
     /**
@@ -51,8 +53,7 @@ public class TaskList {
      * @throws ZiqException if the index is invalid
      */
     public Task delete(int index) throws ZiqException {
-        if (index < 0 || index >= tasks.size())
-        {
+        if (index < 0 || index >= tasks.size()) {
             throw new ZiqException("task does not exist");
         }
         return tasks.remove(index);
