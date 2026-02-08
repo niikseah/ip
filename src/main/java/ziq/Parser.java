@@ -10,8 +10,8 @@ import java.time.format.DateTimeParseException;
  */
 public class Parser {
 
-    private static final DateTimeFormatter INPUT_FORMAT = DateTimeFormatter.ofPattern("d/M/yyyy HHmm");
     public static final DateTimeFormatter OUTPUT_FORMAT = DateTimeFormatter.ofPattern("MMM dd yyyy, h:mm a");
+    private static final DateTimeFormatter INPUT_FORMAT = DateTimeFormatter.ofPattern("d/M/yyyy HHmm");
 
     /**
      * Parses and executes a user command.
@@ -50,7 +50,8 @@ public class Parser {
         } else if (trimmedInput.startsWith("find ")) {
             handleFind(trimmedInput, tasks, ui);
         } else {
-            throw new ZiqException("idk lol,,, only the following commands work: todo, deadline, event, or find!");
+            throw new ZiqException("idk lol,,, only the following commands work: "
+                    + "todo, deadline, event, or find!");
         }
 
         return false;
@@ -66,7 +67,8 @@ public class Parser {
      * @param isMark true to mark as done, false to unmark
      * @throws ZiqException if the task index is invalid
      */
-    private static void handleMark(String input, TaskList tasks, Ui ui, Storage storage, boolean isMark) throws ZiqException {
+    private static void handleMark(String input, TaskList tasks, Ui ui, Storage storage, boolean isMark)
+            throws ZiqException {
         try {
             int index = Integer.parseInt(input.split(" ")[1]) - 1;
             Task task = tasks.get(index);
@@ -94,7 +96,9 @@ public class Parser {
      * @throws ZiqException if the description is empty
      */
     private static void handleTodo(String input, TaskList tasks, Ui ui, Storage storage) throws ZiqException {
-        if (input.length() <= 5) throw new ZiqException("description of ToDo cannot be empty");
+        if (input.length() <= 5) {
+            throw new ZiqException("description of ToDo cannot be empty");
+        }
         Task t = new Todo(input.substring(5));
         tasks.add(t);
         storage.save(tasks.getTaskList());
@@ -111,7 +115,9 @@ public class Parser {
      * @throws ZiqException if the format is invalid or the date cannot be parsed
      */
     private static void handleDeadline(String input, TaskList tasks, Ui ui, Storage storage) throws ZiqException {
-        if (!input.contains(" /by ")) throw new ZiqException("deadline must have '/by dd/mm/yyyy HHmm.'");
+        if (!input.contains(" /by ")) {
+            throw new ZiqException("deadline must have '/by dd/mm/yyyy HHmm.'");
+        }
         try {
             String[] parts = input.substring(9).split(" /by ");
             LocalDateTime time = LocalDateTime.parse(parts[1], INPUT_FORMAT);

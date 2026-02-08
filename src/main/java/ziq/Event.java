@@ -1,7 +1,6 @@
 package ziq;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 /**
  * Represents an event task with a start and end date/time.
@@ -43,6 +42,8 @@ public class Event extends Task {
 
     @Override
     public String toString() {
-        return "[E]" + super.toString() + " (from: " + from.format(Parser.OUTPUT_FORMAT) + " to: " + to.format(Parser.OUTPUT_FORMAT) + ")";
+        return "[E]" + super.toString()
+                + " (from: " + from.format(Parser.OUTPUT_FORMAT)
+                + " to: " + to.format(Parser.OUTPUT_FORMAT) + ")";
     }
 }

@@ -28,15 +28,17 @@ public class Ui {
     }
 
     /**
-     * Prints a line to the current output (buffer if set, otherwise System.out).
+     * Prints one or more lines to the current output (buffer if set, otherwise System.out).
      *
-     * @param line the line to print
+     * @param lines the lines to print (varargs)
      */
-    public void printLine(String line) {
-        if (responseBuffer != null) {
-            responseBuffer.append(line).append("\n");
-        } else {
-            System.out.println(line);
+    public void printLine(String... lines) {
+        for (String line : lines) {
+            if (responseBuffer != null) {
+                responseBuffer.append(line).append("\n");
+            } else {
+                System.out.println(line);
+            }
         }
     }
 
