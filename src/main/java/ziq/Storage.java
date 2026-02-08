@@ -42,6 +42,7 @@ public class Storage {
         try (Scanner s = new Scanner(f)) {
             while (s.hasNext()) {
                 String[] parts = s.nextLine().split(" \\| ");
+                assert parts.length >= 3 : "save file line must have at least 3 parts (type | done | description)";
                 TaskType type = TaskType.fromCode(parts[0]);
                 Task task = null;
                 switch (type) {
@@ -49,9 +50,11 @@ public class Storage {
                     task = new Todo(parts[2]);
                     break;
                 case DEADLINE:
+                    assert parts.length >= 4 : "deadline line must have 4 parts (type | done | description | by)";
                     task = new Deadline(parts[2], LocalDateTime.parse(parts[3]));
                     break;
                 case EVENT:
+                    assert parts.length >= 5 : "event line must have 5 parts (type | done | description | from | to)";
                     task = new Event(parts[2], LocalDateTime.parse(parts[3]), LocalDateTime.parse(parts[4]));
                     break;
                 default:
@@ -76,6 +79,7 @@ public class Storage {
      * @param list the list of tasks to save
      */
     public void save(ArrayList<Task> list) {
+        assert list != null : "task list to save must not be null";
         try {
             File f = new File(filePath);
             if (f.getParentFile() != null) {

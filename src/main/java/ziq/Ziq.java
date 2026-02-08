@@ -28,6 +28,7 @@ public class Ziq {
      * @param filePath the path to the file where tasks are stored
      */
     public Ziq(String filePath) {
+        assert filePath != null && !filePath.isEmpty() : "file path must not be null or empty";
         ui = new Ui();
         storage = new Storage(filePath, ui);
         try {
@@ -46,6 +47,7 @@ public class Ziq {
      * @return the response string to show, or the bye message if command is "bye"
      */
     public String getResponse(String input) {
+        assert input != null : "input must not be null";
         String trimmed = input.trim();
         if (trimmed.isEmpty()) {
             return "";
