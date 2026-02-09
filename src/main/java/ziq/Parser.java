@@ -35,10 +35,7 @@ public class Parser {
         }
 
         if (trimmedInput.equalsIgnoreCase("list")) {
-            ui.printLine("Here is your To-Do list!");
-            for (int i = 0; i < tasks.size(); i++) {
-                ui.printLine((i + 1) + ". " + tasks.get(i));
-            }
+            printTaskList(tasks, ui);
         } else if (trimmedInput.startsWith("mark ")) {
             handleMark(trimmedInput, tasks, ui, storage, true);
         } else if (trimmedInput.startsWith("unmark ")) {
@@ -74,19 +71,22 @@ public class Parser {
     private static void handleMark(String input, TaskList tasks, Ui ui, Storage storage, boolean isMark)
             throws ZiqException {
         try {
-            int index = Integer.parseInt(input.split(" ")[1]) - 1;
+            String[] parts = input.split(" ");
+            int taskNumber = Integer.parseInt(parts[1]);
+            int index = taskNumber - DISPLAY_INDEX_OFFSET;
             Task task = tasks.get(index);
-            if (isMark) {
+            
+            if (shouldMark) {
                 task.markAsDone();
-                ui.printLine("donezos");
+                ui.printLine("Task marked as done:");
             } else {
                 task.unmark();
-                ui.printLine("undonezos");
+                ui.printLine("Task unmarked:");
             }
             ui.printLine("  " + task);
             storage.save(tasks.getTaskList());
         } catch (IndexOutOfBoundsException | NumberFormatException e) {
-            throw new ZiqException("got this task number?");
+            throw new ZiqException("Invalid task number. Please provide a valid task number.");
         }
     }
 
@@ -123,14 +123,14 @@ public class Parser {
             throw new ZiqException("deadline must have '/by dd/mm/yyyy HHmm.'");
         }
         try {
-            String[] parts = input.substring(9).split(" /by ");
-            LocalDateTime time = LocalDateTime.parse(parts[1], INPUT_FORMAT);
-            Task t = new Deadline(parts[0], time);
-            tasks.add(t);
-            storage.save(tasks.getTaskList());
-            printAdded(t, tasks.size(), ui);
+            String commandBody = input.substring(COMMAND_DEADLINE_PREFIX_LENGTH);
+            String[] parts = commandBody.split(" /by ");
+            String description = parts[0];
+            LocalDateTime deadlineTime = LocalDateTime.parse(parts[1], INPUT_FORMAT);
+            Task task = new Deadline(description, deadlineTime);
+            addTaskAndSave(task, tasks, storage, ui);
         } catch (DateTimeParseException e) {
-            throw new ZiqException("Please use the format: dd/mm/yyyy HHmm (e.g. 2/12/2019 1800)");
+            throw new ZiqException("Invalid date format. Please use: dd/mm/yyyy HHmm (e.g. 2/12/2019 1800)");
         }
     }
 
@@ -145,18 +145,18 @@ public class Parser {
      */
     private static void handleEvent(String input, TaskList tasks, Ui ui, Storage storage) throws ZiqException {
         if (!input.contains(" /from ") || !input.contains(" /to ")) {
-            throw new ZiqException("event needs '/from' and '/to' time.");
+            throw new ZiqException("Event must include '/from' and '/to' with date and time");
         }
         try {
-            String[] parts = input.substring(6).split(" /from | /to ");
-            Task t = new Event(parts[0],
-                    LocalDateTime.parse(parts[1], INPUT_FORMAT),
-                    LocalDateTime.parse(parts[2], INPUT_FORMAT));
-            tasks.add(t);
-            storage.save(tasks.getTaskList());
-            printAdded(t, tasks.size(), ui);
+            String commandBody = input.substring(COMMAND_EVENT_PREFIX_LENGTH);
+            String[] parts = commandBody.split(" /from | /to ");
+            String description = parts[0];
+            LocalDateTime startTime = LocalDateTime.parse(parts[1], INPUT_FORMAT);
+            LocalDateTime endTime = LocalDateTime.parse(parts[2], INPUT_FORMAT);
+            Task task = new Event(description, startTime, endTime);
+            addTaskAndSave(task, tasks, storage, ui);
         } catch (DateTimeParseException e) {
-            throw new ZiqException("Please use the format: dd/mm/yyyy HHmm (e.g. 2/12/2019 1800)");
+            throw new ZiqException("Invalid date format. Please use: dd/mm/yyyy HHmm (e.g. 2/12/2019 1800)");
         }
     }
 
@@ -171,14 +171,16 @@ public class Parser {
      */
     private static void handleDelete(String input, TaskList tasks, Ui ui, Storage storage) throws ZiqException {
         try {
-            int index = Integer.parseInt(input.substring(7)) - 1;
-            Task removed = tasks.delete(index);
+            String taskNumberString = input.substring(COMMAND_DELETE_PREFIX_LENGTH);
+            int taskNumber = Integer.parseInt(taskNumberString);
+            int index = taskNumber - DISPLAY_INDEX_OFFSET;
+            Task removedTask = tasks.delete(index);
             storage.save(tasks.getTaskList());
-            ui.printLine("task removed");
-            ui.printLine("  " + removed);
-            ui.printLine("Now you have " + tasks.size() + " tasks in the list.");
+            ui.printLine("Task removed:");
+            ui.printLine("  " + removedTask);
+            ui.printLine("Now you have " + tasks.size() + " task(s) in the list.");
         } catch (NumberFormatException e) {
-            throw new ZiqException("the provided number is invalid...");
+            throw new ZiqException("Invalid task number. Please provide a valid number.");
         }
     }
 
@@ -189,34 +191,60 @@ public class Parser {
      * @param tasks the task list to search
      */
     private static void handleFind(String input, TaskList tasks, Ui ui) {
-        if (input.length() <= 5) {
-            ui.printLine("Here is your To-Do list!");
-            for (int i = 0; i < tasks.size(); i++) {
-                ui.printLine((i + 1) + ". " + tasks.get(i));
-            }
+        if (input.length() <= COMMAND_FIND_PREFIX_LENGTH) {
+            printTaskList(tasks, ui);
             return;
         }
-        String keyword = input.substring(5).trim().toLowerCase();
-        ui.printLine("Here are the matching tasks in your list:");
-        int count = 0;
+        String keyword = input.substring(COMMAND_FIND_PREFIX_LENGTH).trim().toLowerCase();
+        printMatchingTasks(tasks, keyword, ui);
+    }
+
+    /**
+     * Prints all tasks in the task list.
+     *
+     * @param tasks the task list to print
+     * @param ui the UI handler for output
+     */
+    private static void printTaskList(TaskList tasks, Ui ui) {
+        ui.printLine("Here is your To-Do list!");
         for (int i = 0; i < tasks.size(); i++) {
-            Task t = tasks.get(i);
-            if (t.description().toLowerCase().contains(keyword)) {
-                count++;
-                ui.printLine(count + ". " + t);
+            int displayNumber = i + DISPLAY_INDEX_OFFSET;
+            ui.printLine(displayNumber + ". " + tasks.get(i));
+        }
+    }
+
+    /**
+     * Prints tasks whose description contains the given keyword.
+     *
+     * @param tasks the task list to search
+     * @param keyword the keyword to search for (case-insensitive)
+     * @param ui the UI handler for output
+     */
+    private static void printMatchingTasks(TaskList tasks, String keyword, Ui ui) {
+        ui.printLine("Here are the matching tasks in your list:");
+        int matchCount = 0;
+        for (int i = 0; i < tasks.size(); i++) {
+            Task task = tasks.get(i);
+            if (task.description().toLowerCase().contains(keyword)) {
+                matchCount++;
+                ui.printLine(matchCount + ". " + task);
             }
         }
     }
 
     /**
-     * Prints a message indicating a task has been added.
+     * Adds a task to the list, saves to storage, and prints confirmation.
      *
-     * @param t the task that was added
-     * @param size the new total number of tasks
+     * @param task the task to add
+     * @param tasks the task list to modify
+     * @param storage the storage handler for saving
+     * @param ui the UI handler for output
      */
-    private static void printAdded(Task t, int size, Ui ui) {
-        ui.printLine("task added");
-        ui.printLine("  " + t);
-        ui.printLine("Now you have " + size + " tasks in the list.");
+    private static void addTaskAndSave(Task task, TaskList tasks, Storage storage, Ui ui) {
+        tasks.add(task);
+        storage.save(tasks.getTaskList());
+        ui.printLine("Task added:");
+        ui.printLine("  " + task);
+        ui.printLine("Now you have " + tasks.size() + " task(s) in the list.");
     }
 }
