@@ -13,13 +13,6 @@ public class Parser {
     public static final DateTimeFormatter OUTPUT_FORMAT = DateTimeFormatter.ofPattern("MMM dd yyyy, h:mm a");
     private static final DateTimeFormatter INPUT_FORMAT = DateTimeFormatter.ofPattern("d/M/yyyy HHmm");
 
-    private static final int COMMAND_TODO_PREFIX_LENGTH = 5;
-    private static final int COMMAND_DELETE_PREFIX_LENGTH = 7;
-    private static final int COMMAND_DEADLINE_PREFIX_LENGTH = 9;
-    private static final int COMMAND_EVENT_PREFIX_LENGTH = 6;
-    private static final int COMMAND_FIND_PREFIX_LENGTH = 5;
-    private static final int DISPLAY_INDEX_OFFSET = 1;
-
     /**
      * Parses and executes a user command.
      *
@@ -31,6 +24,10 @@ public class Parser {
      * @throws ZiqException if the command is invalid or cannot be executed
      */
     public static boolean executeCommand(String input, TaskList tasks, Ui ui, Storage storage) throws ZiqException {
+        assert input != null : "input must not be null";
+        assert tasks != null : "tasks must not be null";
+        assert ui != null : "ui must not be null";
+        assert storage != null : "storage must not be null";
         String trimmedInput = input.trim();
 
         if (trimmedInput.equalsIgnoreCase("bye")) {
@@ -54,8 +51,8 @@ public class Parser {
         } else if (trimmedInput.startsWith("find ")) {
             handleFind(trimmedInput, tasks, ui);
         } else {
-            throw new ZiqException("Unknown command. Available commands: "
-                    + "todo, deadline, event, mark, unmark, delete, list, find, bye");
+            throw new ZiqException("idk lol,,, only the following commands work: "
+                    + "todo, deadline, event, or find!");
         }
 
         return false;
@@ -71,7 +68,7 @@ public class Parser {
      * @param isMark true to mark as done, false to unmark
      * @throws ZiqException if the task index is invalid
      */
-    private static void handleMark(String input, TaskList tasks, Ui ui, Storage storage, boolean shouldMark)
+    private static void handleMark(String input, TaskList tasks, Ui ui, Storage storage, boolean isMark)
             throws ZiqException {
         try {
             String[] parts = input.split(" ");
@@ -103,12 +100,13 @@ public class Parser {
      * @throws ZiqException if the description is empty
      */
     private static void handleTodo(String input, TaskList tasks, Ui ui, Storage storage) throws ZiqException {
-        if (input.length() <= COMMAND_TODO_PREFIX_LENGTH) {
-            throw new ZiqException("Todo description cannot be empty");
+        if (input.length() <= 5) {
+            throw new ZiqException("description of ToDo cannot be empty");
         }
-        String description = input.substring(COMMAND_TODO_PREFIX_LENGTH);
-        Task task = new Todo(description);
-        addTaskAndSave(task, tasks, storage, ui);
+        Task t = new Todo(input.substring(5));
+        tasks.add(t);
+        storage.save(tasks.getTaskList());
+        printAdded(t, tasks.size(), ui);
     }
 
     /**
@@ -122,7 +120,7 @@ public class Parser {
      */
     private static void handleDeadline(String input, TaskList tasks, Ui ui, Storage storage) throws ZiqException {
         if (!input.contains(" /by ")) {
-            throw new ZiqException("Deadline must include '/by' followed by date and time");
+            throw new ZiqException("deadline must have '/by dd/mm/yyyy HHmm.'");
         }
         try {
             String commandBody = input.substring(COMMAND_DEADLINE_PREFIX_LENGTH);
