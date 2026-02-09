@@ -12,6 +12,20 @@ import java.util.Scanner;
  * Manages persistent storage of task data.
  */
 public class Storage {
+    private static final String FILE_DELIMITER = " | ";
+    private static final String DONE_STATUS_CODE = "1";
+    private static final String NOT_DONE_STATUS_CODE = "0";
+    private static final int MINIMUM_PARTS_COUNT = 3;
+    private static final int TODO_PARTS_COUNT = 3;
+    private static final int DEADLINE_PARTS_COUNT = 4;
+    private static final int EVENT_PARTS_COUNT = 5;
+    private static final int TYPE_INDEX = 0;
+    private static final int STATUS_INDEX = 1;
+    private static final int DESCRIPTION_INDEX = 2;
+    private static final int DEADLINE_TIME_INDEX = 3;
+    private static final int EVENT_START_INDEX = 3;
+    private static final int EVENT_END_INDEX = 4;
+
     private final String filePath;
     private final Ui ui;
 
@@ -33,44 +47,86 @@ public class Storage {
      * @throws ZiqException if there is an error reading or parsing the file
      */
     public ArrayList<Task> load() throws ZiqException {
-        ArrayList<Task> loadedList = new ArrayList<>();
-        File f = new File(filePath);
-        if (!f.exists()) {
-            return loadedList;
+        ArrayList<Task> loadedTasks = new ArrayList<>();
+        File file = new File(filePath);
+        if (!file.exists()) {
+            return loadedTasks;
         }
 
-        try (Scanner s = new Scanner(f)) {
-            while (s.hasNext()) {
-                String[] parts = s.nextLine().split(" \\| ");
-                assert parts.length >= 3 : "save file line must have at least 3 parts (type | done | description)";
-                TaskType type = TaskType.fromCode(parts[0]);
-                Task task = null;
-                switch (type) {
-                case TODO:
-                    task = new Todo(parts[2]);
-                    break;
-                case DEADLINE:
-                    assert parts.length >= 4 : "deadline line must have 4 parts (type | done | description | by)";
-                    task = new Deadline(parts[2], LocalDateTime.parse(parts[3]));
-                    break;
-                case EVENT:
-                    assert parts.length >= 5 : "event line must have 5 parts (type | done | description | from | to)";
-                    task = new Event(parts[2], LocalDateTime.parse(parts[3]), LocalDateTime.parse(parts[4]));
-                    break;
-                default:
-                    break;
-                }
+        try (Scanner scanner = new Scanner(file)) {
+            while (scanner.hasNext()) {
+                String line = scanner.nextLine();
+                Task task = parseTaskFromLine(line);
                 if (task != null) {
-                    if (parts[1].equals("1")) {
-                        task.markAsDone();
-                    }
-                    loadedList.add(task);
+                    loadedTasks.add(task);
                 }
             }
+        } catch (IOException e) {
+            throw new ZiqException("Error reading save file: " + e.getMessage());
+        } catch (ZiqException e) {
+            throw e;
         } catch (Exception e) {
-            throw new ZiqException("error loading save file");
+            throw new ZiqException("Error parsing save file: " + e.getMessage());
         }
-        return loadedList;
+        return loadedTasks;
+    }
+
+    /**
+     * Parses a single line from the save file into a Task object.
+     *
+     * @param line the line to parse
+     * @return the parsed Task, or null if the line is invalid
+     * @throws ZiqException if there is an error parsing the line
+     */
+    private Task parseTaskFromLine(String line) throws ZiqException {
+        String[] parts = line.split(FILE_DELIMITER);
+        assert parts.length >= MINIMUM_PARTS_COUNT : "save file line must have at least 3 parts (type | done | description)";
+        if (parts.length < MINIMUM_PARTS_COUNT) {
+            return null;
+        }
+
+        TaskType type = TaskType.fromCode(parts[TYPE_INDEX]);
+        Task task = createTaskFromParts(type, parts);
+        if (task != null && parts[STATUS_INDEX].equals(DONE_STATUS_CODE)) {
+            task.markAsDone();
+        }
+        return task;
+    }
+
+    /**
+     * Creates a Task object from parsed parts based on task type.
+     *
+     * @param type the type of task
+     * @param parts the parsed parts from the save file line
+     * @return the created Task, or null if type is invalid
+     * @throws ZiqException if there is an error creating the task
+     */
+    private Task createTaskFromParts(TaskType type, String[] parts) throws ZiqException {
+        switch (type) {
+        case TODO:
+            assert parts.length >= TODO_PARTS_COUNT : "todo line must have 3 parts (type | done | description)";
+            if (parts.length < TODO_PARTS_COUNT) {
+                return null;
+            }
+            return new Todo(parts[DESCRIPTION_INDEX]);
+        case DEADLINE:
+            assert parts.length >= DEADLINE_PARTS_COUNT : "deadline line must have 4 parts (type | done | description | by)";
+            if (parts.length < DEADLINE_PARTS_COUNT) {
+                return null;
+            }
+            LocalDateTime deadlineTime = LocalDateTime.parse(parts[DEADLINE_TIME_INDEX]);
+            return new Deadline(parts[DESCRIPTION_INDEX], deadlineTime);
+        case EVENT:
+            assert parts.length >= EVENT_PARTS_COUNT : "event line must have 5 parts (type | done | description | from | to)";
+            if (parts.length < EVENT_PARTS_COUNT) {
+                return null;
+            }
+            LocalDateTime startTime = LocalDateTime.parse(parts[EVENT_START_INDEX]);
+            LocalDateTime endTime = LocalDateTime.parse(parts[EVENT_END_INDEX]);
+            return new Event(parts[DESCRIPTION_INDEX], startTime, endTime);
+        default:
+            return null;
+        }
     }
 
     /**
@@ -78,32 +134,83 @@ public class Storage {
      *
      * @param list the list of tasks to save
      */
-    public void save(ArrayList<Task> list) {
-        assert list != null : "task list to save must not be null";
+    public void save(ArrayList<Task> taskList) {
+        assert taskList != null : "task list to save must not be null";
         try {
-            File f = new File(filePath);
-            if (f.getParentFile() != null) {
-                f.getParentFile().mkdirs();
-            }
-            FileWriter fw = new FileWriter(f);
-            for (Task t : list) {
-                TaskType type = (t instanceof Todo)
-                        ? TaskType.TODO
-                        : (t instanceof Deadline)
-                        ? TaskType.DEADLINE
-                        : TaskType.EVENT;
-                String isDone = t.getStatus().equals("X") ? "1" : "0";
-                String line = type.getCode() + " | " + isDone + " | " + t.description();
-                if (t instanceof Deadline) {
-                    line += " | " + ((Deadline) t).by();
-                } else if (t instanceof Event) {
-                    line += " | " + ((Event) t).from() + " | " + ((Event) t).to();
-                }
-                fw.write(line + System.lineSeparator());
-            }
-            fw.close();
+            File file = new File(filePath);
+            createParentDirectoriesIfNeeded(file);
+            writeTasksToFile(file, taskList);
         } catch (IOException e) {
-            ui.printLine("oop. could not save tasks.");
+            ui.printLine("Error: Could not save tasks to file.");
+        }
+    }
+
+    /**
+     * Creates parent directories for the file if they don't exist.
+     *
+     * @param file the file whose parent directories should be created
+     */
+    private void createParentDirectoriesIfNeeded(File file) {
+        File parentDirectory = file.getParentFile();
+        if (parentDirectory != null) {
+            parentDirectory.mkdirs();
+        }
+    }
+
+    /**
+     * Writes all tasks to the file in the save format.
+     *
+     * @param file the file to write to
+     * @param taskList the list of tasks to save
+     * @throws IOException if there is an error writing to the file
+     */
+    private void writeTasksToFile(File file, ArrayList<Task> taskList) throws IOException {
+        try (FileWriter fileWriter = new FileWriter(file)) {
+            for (Task task : taskList) {
+                String line = formatTaskForSave(task);
+                fileWriter.write(line + System.lineSeparator());
+            }
+        }
+    }
+
+    /**
+     * Formats a task into a string for saving to file.
+     *
+     * @param task the task to format
+     * @return the formatted string representation
+     */
+    private String formatTaskForSave(Task task) {
+        TaskType type = determineTaskType(task);
+        String statusCode = task.getStatus().equals("X") ? DONE_STATUS_CODE : NOT_DONE_STATUS_CODE;
+        StringBuilder line = new StringBuilder();
+        line.append(type.getCode()).append(FILE_DELIMITER);
+        line.append(statusCode).append(FILE_DELIMITER);
+        line.append(task.description());
+
+        if (task instanceof Deadline) {
+            Deadline deadline = (Deadline) task;
+            line.append(FILE_DELIMITER).append(deadline.by());
+        } else if (task instanceof Event) {
+            Event event = (Event) task;
+            line.append(FILE_DELIMITER).append(event.from());
+            line.append(FILE_DELIMITER).append(event.to());
+        }
+        return line.toString();
+    }
+
+    /**
+     * Determines the TaskType of a given task.
+     *
+     * @param task the task to check
+     * @return the corresponding TaskType
+     */
+    private TaskType determineTaskType(Task task) {
+        if (task instanceof Todo) {
+            return TaskType.TODO;
+        } else if (task instanceof Deadline) {
+            return TaskType.DEADLINE;
+        } else {
+            return TaskType.EVENT;
         }
     }
 }
