@@ -28,10 +28,10 @@ public class TaskList {
     /**
      * Adds one or more tasks to the list.
      *
-     * @param t the task(s) to add (varargs)
+     * @param tasksToAdd the task(s) to add (varargs)
      */
-    public void add(Task... t) {
-        for (Task task : t) {
+    public void add(Task... tasksToAdd) {
+        for (Task task : tasksToAdd) {
             tasks.add(task);
         }
     }
