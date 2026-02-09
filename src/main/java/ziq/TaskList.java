@@ -15,7 +15,6 @@ public class TaskList {
      * @param tasks the initial list of tasks
      */
     public TaskList(ArrayList<Task> tasks) {
-        assert tasks != null : "tasks list must not be null";
         this.tasks = tasks;
     }
 
@@ -33,7 +32,6 @@ public class TaskList {
      */
     public void add(Task... t) {
         for (Task task : t) {
-            assert task != null : "task to add must not be null";
             tasks.add(task);
         }
     }
@@ -58,7 +56,6 @@ public class TaskList {
         if (index < 0 || index >= tasks.size()) {
             throw new ZiqException("task does not exist");
         }
-        assert index >= 0 && index < tasks.size() : "index must be valid at this point";
         return tasks.remove(index);
     }
 
@@ -69,7 +66,6 @@ public class TaskList {
      * @return the task at the specified index
      */
     public Task get(int index) {
-        assert index >= 0 && index < tasks.size() : "index must be in range [0, size)";
         return tasks.get(index);
     }
 
