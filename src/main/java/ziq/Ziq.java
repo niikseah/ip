@@ -13,7 +13,6 @@ public class Ziq {
     private Storage storage;
     private TaskList tasks;
     private Ui ui;
-    private Parser parser;
 
     /**
      * Constructs a new Ziq instance with the default file path for storage.
