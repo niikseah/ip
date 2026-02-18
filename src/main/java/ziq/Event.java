@@ -3,7 +3,7 @@ package ziq;
 import java.time.LocalDateTime;
 
 /**
- * Represents an event task with a start and end date/time.
+ * Represents an Event task with a start and end date/time.
  */
 public class Event extends Task {
     protected LocalDateTime from;

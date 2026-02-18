@@ -3,7 +3,7 @@ package ziq;
 import java.time.LocalDateTime;
 
 /**
- * Represents a deadline task with a due date/time.
+ * Represents a Deadline task with a due date/time.
  */
 public class Deadline extends Task {
 

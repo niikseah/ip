@@ -43,8 +43,7 @@ public class MainWindow extends AnchorPane {
     }
 
     /**
-     * Initializes the main window: loads user and Ziq images, sets up scroll listener,
-     * and adds the initial greeting dialog.
+     * Initializes the main window, consisting of images and dialog boxes.
      */
     @FXML
     public void initialize() {
@@ -52,22 +51,22 @@ public class MainWindow extends AnchorPane {
         ziqImage = loadImage("/images/ziq.jpg");
         dialogContainer.heightProperty().addListener((observable) -> scrollPane.setVvalue(1.0));
         dialogContainer.getChildren().add(DialogBox.getDukeDialog(
-                "Hello, I'm Ziq!\nWhat can I do for you?", ziqImage));
+                "Hello, I'm Ziq!\nPlease give me a command!\nIf you need help, enter 'help.", ziqImage));
     }
 
-    /** Injects the Ziq instance. */
+    /** Sets up Ziq instance. */
     public void setZiq(Ziq z) {
         ziq = z;
     }
 
-    /** Injects the Stage so the window can be closed on bye. */
+    /** Sets up the stage so the window can be closed on bye. */
     public void setStage(Stage s) {
         stage = s;
     }
 
     /**
-     * Creates two dialog boxes, one echoing user input and the other containing Ziq's reply,
-     * and appends them to the dialog container. Clears the user input after processing.
+     * Creates two dialog boxes, one for user input and the other for Ziq's reply,
+     * Clears the user input after processing.
      */
     @FXML
     private void handleUserInput() {

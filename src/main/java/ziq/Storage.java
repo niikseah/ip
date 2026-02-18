@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.regex.Pattern;
 
 /**
  * Handles loading and saving tasks to/from a file.
@@ -53,32 +54,11 @@ public class Storage {
             return loadedTasks;
         }
 
-        try (Scanner s = new Scanner(f)) {
+        try (Scanner s = new Scanner(file)) {
             while (s.hasNext()) {
-                String[] parts = s.nextLine().split(" \\| ");
-                assert parts.length >= 3 : "save file line must have at least 3 parts (type | done | description)";
-                TaskType type = TaskType.fromCode(parts[0]);
-                Task task = null;
-                switch (type) {
-                case TODO:
-                    task = new Todo(parts[2]);
-                    break;
-                case DEADLINE:
-                    assert parts.length >= 4 : "deadline line must have 4 parts (type | done | description | by)";
-                    task = new Deadline(parts[2], LocalDateTime.parse(parts[3]));
-                    break;
-                case EVENT:
-                    assert parts.length >= 5 : "event line must have 5 parts (type | done | description | from | to)";
-                    task = new Event(parts[2], LocalDateTime.parse(parts[3]), LocalDateTime.parse(parts[4]));
-                    break;
-                default:
-                    break;
-                }
+                Task task = parseTaskFromLine(s.nextLine());
                 if (task != null) {
-                    if (parts[1].equals("1")) {
-                        task.markAsDone();
-                    }
-                    loadedList.add(task);
+                    loadedTasks.add(task);
                 }
             }
         } catch (IOException e) {
@@ -99,7 +79,7 @@ public class Storage {
      * @throws ZiqException if there is an error parsing the line
      */
     private Task parseTaskFromLine(String line) throws ZiqException {
-        String[] parts = line.split(FILE_DELIMITER);
+        String[] parts = line.split(Pattern.quote(FILE_DELIMITER));
         if (parts.length < MINIMUM_PARTS_COUNT) {
             return null;
         }
@@ -153,27 +133,9 @@ public class Storage {
     public void save(ArrayList<Task> list) {
         assert list != null : "task list to save must not be null";
         try {
-            File f = new File(filePath);
-            if (f.getParentFile() != null) {
-                f.getParentFile().mkdirs();
-            }
-            FileWriter fw = new FileWriter(f);
-            for (Task t : list) {
-                TaskType type = (t instanceof Todo)
-                        ? TaskType.TODO
-                        : (t instanceof Deadline)
-                        ? TaskType.DEADLINE
-                        : TaskType.EVENT;
-                String isDone = t.getStatus().equals("X") ? "1" : "0";
-                String line = type.getCode() + " | " + isDone + " | " + t.description();
-                if (t instanceof Deadline) {
-                    line += " | " + ((Deadline) t).by();
-                } else if (t instanceof Event) {
-                    line += " | " + ((Event) t).from() + " | " + ((Event) t).to();
-                }
-                fw.write(line + System.lineSeparator());
-            }
-            fw.close();
+            File file = new File(filePath);
+            createParentDirectoriesIfNeeded(file);
+            writeTasksToFile(file, list);
         } catch (IOException e) {
             ui.printLine("Error: Could not save tasks to file.");
         }
