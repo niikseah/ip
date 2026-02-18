@@ -1,6 +1,7 @@
 package ziq;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Manages a collection of tasks.
@@ -32,10 +33,10 @@ public class TaskList {
      * @param tasksToAdd the task(s) to add (varargs)
      */
     public void add(Task... tasksToAdd) {
-        for (Task task : tasksToAdd) {
+        Arrays.stream(tasksToAdd).forEach(task -> {
             assert task != null : "task to add must not be null";
             tasks.add(task);
-        }
+        });
     }
 
     /**

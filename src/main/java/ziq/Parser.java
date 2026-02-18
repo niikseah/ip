@@ -3,6 +3,9 @@ package ziq;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Parses and executes user commands.
@@ -213,10 +216,9 @@ public class Parser {
      */
     private static void printTaskList(TaskList tasks, Ui ui) {
         ui.printLine("Here is your To-Do list!");
-        for (int i = 0; i < tasks.size(); i++) {
-            int displayNumber = i + DISPLAY_INDEX_OFFSET;
-            ui.printLine(displayNumber + ". " + tasks.get(i));
-        }
+        IntStream.range(0, tasks.size())
+                .mapToObj(i -> (i + DISPLAY_INDEX_OFFSET) + ". " + tasks.get(i))
+                .forEach(ui::printLine);
     }
 
     /**
@@ -228,14 +230,12 @@ public class Parser {
      */
     private static void printMatchingTasks(TaskList tasks, String keyword, Ui ui) {
         ui.printLine("Here are the matching tasks in your list:");
-        int matchCount = 0;
-        for (int i = 0; i < tasks.size(); i++) {
-            Task task = tasks.get(i);
-            if (task.description().toLowerCase().contains(keyword)) {
-                matchCount++;
-                ui.printLine(matchCount + ". " + task);
-            }
-        }
+        List<Task> matching = tasks.getTaskList().stream()
+                .filter(task -> task.description().toLowerCase().contains(keyword))
+                .collect(Collectors.toList());
+        IntStream.range(0, matching.size())
+                .mapToObj(i -> (i + DISPLAY_INDEX_OFFSET) + ". " + matching.get(i))
+                .forEach(ui::printLine);
     }
 
     /**

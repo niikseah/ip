@@ -1,5 +1,7 @@
 package ziq;
 
+import java.util.Arrays;
+
 /**
  * Enumeration of task types with their corresponding codes.
  */
@@ -34,11 +36,9 @@ public enum TaskType {
      * @throws ZiqException if the code does not match any task type
      */
     public static TaskType fromCode(String code) throws ZiqException {
-        for (TaskType t : TaskType.values()) {
-            if (t.getCode().equals(code)) {
-                return t;
-            }
-        }
-        throw new ZiqException("what kind of task is this?");
+        return Arrays.stream(TaskType.values())
+                .filter(t -> t.getCode().equals(code))
+                .findFirst()
+                .orElseThrow(() -> new ZiqException("what kind of task is this?"));
     }
 }

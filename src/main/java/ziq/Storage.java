@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 /**
  * Handles loading and saving tasks to/from a file.
@@ -166,9 +167,12 @@ public class Storage {
      */
     private void writeTasksToFile(File file, ArrayList<Task> taskList) throws IOException {
         try (FileWriter fileWriter = new FileWriter(file)) {
-            for (Task task : taskList) {
-                String line = formatTaskForSave(task);
-                fileWriter.write(line + System.lineSeparator());
+            String content = taskList.stream()
+                    .map(this::formatTaskForSave)
+                    .collect(Collectors.joining(System.lineSeparator()));
+            fileWriter.write(content);
+            if (!taskList.isEmpty()) {
+                fileWriter.write(System.lineSeparator());
             }
         }
     }
