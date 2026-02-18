@@ -50,6 +50,20 @@ public class Task {
         this.isDone = false;
     }
 
+    /**
+     * Returns true if this task has the same logical details as the other (description and type-specific fields).
+     * Used to detect duplicate tasks.
+     *
+     * @param other the other task to compare
+     * @return true if details are the same
+     */
+    public boolean hasSameDetailsAs(Task other) {
+        if (other == null) {
+            return false;
+        }
+        return description.equals(other.description);
+    }
+
     @Override
     public String toString() {
         return "[" + getStatus() + "] " + description;

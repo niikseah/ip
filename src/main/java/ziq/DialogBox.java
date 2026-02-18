@@ -46,20 +46,9 @@ public class DialogBox extends HBox {
             e.printStackTrace();
         }
 
-        dialog.setStyle("-fx-line-spacing: 0;");
-        dialog.setPrefWidth(-1);
         setDialogContent(text, isUser);
         displayPicture.setImage(img);
         makeImageViewCircular(displayPicture);
-        // Min height so short messages align with avatar; pref height grows with content so no overlap
-        dialogWrapper.minHeightProperty().bind(displayPicture.fitHeightProperty());
-        // Reserve space for padding (12+12), spacing (20) and avatar so bubble never overlaps
-        dialogWrapper.maxWidthProperty().bind(Bindings.max(0,
-                Bindings.subtract(Bindings.subtract(this.widthProperty(), 44), displayPicture.fitWidthProperty())));
-        // Minimum width so text doesn't wrap to one character per line before layout
-        dialog.maxWidthProperty().bind(Bindings.max(200, dialogWrapper.widthProperty()));
-        // Middle-align when text box <= avatar height; top-align when taller
-        dialogWrapper.heightProperty().addListener((o, oldVal, newVal) -> updateAlignment());
     }
 
     /**

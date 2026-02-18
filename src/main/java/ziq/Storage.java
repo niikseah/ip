@@ -1,9 +1,11 @@
 package ziq;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.regex.Pattern;
@@ -61,12 +63,21 @@ public class Storage {
                     loadedTasks.add(task);
                 }
             }
+        } catch (FileNotFoundException e) {
+            return loadedTasks;
         } catch (IOException e) {
-            throw new ZiqException("Error reading save file: " + e.getMessage());
+            String msg = e.getMessage();
+            if (msg != null && (msg.toLowerCase().contains("access") || msg.toLowerCase().contains("permission"))) {
+                throw new ZiqException("Cannot read save file: access denied. Check file permissions for " + filePath);
+            }
+            throw new ZiqException("Cannot read save file: " + (msg != null ? msg : "unknown error"));
+        } catch (SecurityException e) {
+            throw new ZiqException("Cannot read save file: access denied. Check file permissions for " + filePath);
         } catch (ZiqException e) {
             throw e;
         } catch (Exception e) {
-            throw new ZiqException("Error parsing save file: " + e.getMessage());
+            throw new ZiqException("Save file content is invalid or corrupted: " + e.getMessage()
+                    + ". Fix or remove the file and try again.");
         }
         return loadedTasks;
     }
@@ -101,27 +112,31 @@ public class Storage {
      * @throws ZiqException if there is an error creating the task
      */
     private Task createTaskFromParts(TaskType type, String[] parts) throws ZiqException {
-        switch (type) {
-        case TODO:
-            if (parts.length < TODO_PARTS_COUNT) {
+        try {
+            switch (type) {
+            case TODO:
+                if (parts.length < TODO_PARTS_COUNT) {
+                    return null;
+                }
+                return new Todo(parts[DESCRIPTION_INDEX]);
+            case DEADLINE:
+                if (parts.length < DEADLINE_PARTS_COUNT) {
+                    return null;
+                }
+                LocalDateTime deadlineTime = LocalDateTime.parse(parts[DEADLINE_TIME_INDEX]);
+                return new Deadline(parts[DESCRIPTION_INDEX], deadlineTime);
+            case EVENT:
+                if (parts.length < EVENT_PARTS_COUNT) {
+                    return null;
+                }
+                LocalDateTime startTime = LocalDateTime.parse(parts[EVENT_START_INDEX]);
+                LocalDateTime endTime = LocalDateTime.parse(parts[EVENT_END_INDEX]);
+                return new Event(parts[DESCRIPTION_INDEX], startTime, endTime);
+            default:
                 return null;
             }
-            return new Todo(parts[DESCRIPTION_INDEX]);
-        case DEADLINE:
-            if (parts.length < DEADLINE_PARTS_COUNT) {
-                return null;
-            }
-            LocalDateTime deadlineTime = LocalDateTime.parse(parts[DEADLINE_TIME_INDEX]);
-            return new Deadline(parts[DESCRIPTION_INDEX], deadlineTime);
-        case EVENT:
-            if (parts.length < EVENT_PARTS_COUNT) {
-                return null;
-            }
-            LocalDateTime startTime = LocalDateTime.parse(parts[EVENT_START_INDEX]);
-            LocalDateTime endTime = LocalDateTime.parse(parts[EVENT_END_INDEX]);
-            return new Event(parts[DESCRIPTION_INDEX], startTime, endTime);
-        default:
-            return null;
+        } catch (DateTimeParseException e) {
+            throw new ZiqException("Save file contains an invalid date. Fix or remove the file: " + filePath);
         }
     }
 
@@ -130,26 +145,21 @@ public class Storage {
      *
      * @param list the list of tasks to save
      */
-    public void save(ArrayList<Task> list) {
+    public void save(ArrayList<Task> list) throws ZiqException {
         assert list != null : "task list to save must not be null";
         try {
             File file = new File(filePath);
-            createParentDirectoriesIfNeeded(file);
+            File parent = file.getParentFile();
+            if (parent != null && !parent.exists() && !parent.mkdirs()) {
+                throw new ZiqException("Could not create data folder. Check write permissions: " + parent.getPath());
+            }
             writeTasksToFile(file, list);
         } catch (IOException e) {
-            ui.printLine("Error: Could not save tasks to file.");
-        }
-    }
-
-    /**
-     * Creates parent directories for the file if they don't exist.
-     *
-     * @param file the file whose parent directories should be created
-     */
-    private void createParentDirectoriesIfNeeded(File file) {
-        File parentDirectory = file.getParentFile();
-        if (parentDirectory != null) {
-            parentDirectory.mkdirs();
+            String msg = e.getMessage();
+            if (msg != null && (msg.toLowerCase().contains("access") || msg.toLowerCase().contains("permission"))) {
+                throw new ZiqException("Could not save tasks: access denied. Check file permissions for " + filePath);
+            }
+            throw new ZiqException("Could not save tasks to file: " + (msg != null ? msg : "unknown error"));
         }
     }
 

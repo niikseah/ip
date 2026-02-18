@@ -30,6 +30,15 @@ public class Deadline extends Task {
     }
 
     @Override
+    public boolean hasSameDetailsAs(Task other) {
+        if (!(other instanceof Deadline)) {
+            return false;
+        }
+        Deadline d = (Deadline) other;
+        return description.equals(d.description) && by.equals(d.by);
+    }
+
+    @Override
     public String toString() {
         return "[D]" + super.toString() + " (by: " + by.format(Parser.OUTPUT_FORMAT) + ")";
     }
