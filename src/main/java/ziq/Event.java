@@ -41,6 +41,15 @@ public class Event extends Task {
     }
 
     @Override
+    public boolean hasSameDetailsAs(Task other) {
+        if (!(other instanceof Event)) {
+            return false;
+        }
+        Event e = (Event) other;
+        return description.equals(e.description) && from.equals(e.from) && to.equals(e.to);
+    }
+
+    @Override
     public String toString() {
         return "[E]" + super.toString()
                 + " (from: " + from.format(Parser.OUTPUT_FORMAT)

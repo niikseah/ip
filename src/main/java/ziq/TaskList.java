@@ -44,6 +44,21 @@ public class TaskList {
     }
 
     /**
+     * Returns true if the list already contains a task with the same details as the given task.
+     *
+     * @param task the task to check for duplicate
+     * @return true if a duplicate exists
+     */
+    public boolean containsDuplicateOf(Task task) {
+        for (Task existing : tasks) {
+            if (existing.hasSameDetailsAs(task)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Returns the list of all tasks.
      *
      * @return the list of tasks
