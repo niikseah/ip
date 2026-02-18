@@ -61,7 +61,7 @@ public class TaskList {
      */
     public Task delete(int index) throws ZiqException {
         if (index < 0 || index >= tasks.size()) {
-            throw new ZiqException("task does not exist");
+            throw new ZiqException("task number does not exist. Use 'list' to see valid task numbers (e.g. delete 1).");
         }
         assert index >= 0 && index < tasks.size() : "index must be valid at this point";
         return tasks.remove(index);

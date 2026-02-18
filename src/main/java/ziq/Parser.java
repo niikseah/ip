@@ -45,26 +45,26 @@ public class Parser {
 
         if (trimmedInput.equalsIgnoreCase("list")) {
             printTaskList(tasks, ui);
-        } else if (trimmedInput.startsWith("mark ")) {
+        } else if (trimmedInput.equals("mark") || trimmedInput.startsWith("mark ")) {
             handleMark(trimmedInput, tasks, ui, storage, true);
-        } else if (trimmedInput.startsWith("unmark ")) {
+        } else if (trimmedInput.equals("unmark") || trimmedInput.startsWith("unmark ")) {
             handleMark(trimmedInput, tasks, ui, storage, false);
-        } else if (trimmedInput.startsWith("todo ")) {
+        } else if (trimmedInput.equals("todo") || trimmedInput.startsWith("todo ")) {
             handleTodo(trimmedInput, tasks, ui, storage);
-        } else if (trimmedInput.startsWith("deadline ")) {
+        } else if (trimmedInput.equals("deadline") || trimmedInput.startsWith("deadline ")) {
             handleDeadline(trimmedInput, tasks, ui, storage);
-        } else if (trimmedInput.startsWith("event ")) {
+        } else if (trimmedInput.equals("event") || trimmedInput.startsWith("event ")) {
             handleEvent(trimmedInput, tasks, ui, storage);
-        } else if (trimmedInput.startsWith("delete ")) {
+        } else if (trimmedInput.equals("delete") || trimmedInput.startsWith("delete ")) {
             handleDelete(trimmedInput, tasks, ui, storage);
         } else if (trimmedInput.startsWith("find ")) {
             handleFind(trimmedInput, tasks, ui);
-        } else if (trimmedInput.startsWith("schedule ")) {
+        } else if (trimmedInput.equals("schedule") || trimmedInput.startsWith("schedule ")) {
             handleSchedule(trimmedInput, tasks, ui);
         } else if (trimmedInput.startsWith("help")) {
             getHelp(ui);
         } else {
-            throw new ZiqException("idk lol,,, please enter 'help' for a list of commands!");
+            throw new ZiqException("Unknown command. Enter 'help' for a list of commands.");
         }
 
         return false;
@@ -98,7 +98,9 @@ public class Parser {
             ui.printLine("  " + task);
             storage.save(tasks.getTaskList());
         } catch (IndexOutOfBoundsException | NumberFormatException e) {
-            throw new ZiqException("invalid task number.");
+            String cmd = isMark ? "mark" : "unmark";
+            throw new ZiqException("invalid task number. Correct format: " + cmd + " <number> (e.g. " + cmd + " 1). "
+                    + "Use 'list' to see task numbers.");
         }
     }
 
@@ -113,7 +115,8 @@ public class Parser {
      */
     private static void handleTodo(String input, TaskList tasks, Ui ui, Storage storage) throws ZiqException {
         if (input.length() <= 5) {
-            throw new ZiqException("description of task cannot be empty");
+            throw new ZiqException("description of task cannot be empty. Correct format: todo <description> "
+                    + "(e.g. todo read book)");
         }
         Task t = new Todo(input.substring(5));
         addTaskAndSave(t, tasks, storage, ui);
@@ -140,7 +143,11 @@ public class Parser {
             Task task = new Deadline(description, deadlineTime);
             addTaskAndSave(task, tasks, storage, ui);
         } catch (DateTimeParseException e) {
-            throw new ZiqException("invalid date format. use dd/mm/yyyy HHmm (e.g. 2/22/2022 1200)");
+            throw new ZiqException("invalid date format for deadline. Correct format: "
+                    + "deadline <description> /by d/M/yyyy HHmm (e.g. deadline submit report /by 2/22/2022 1200)");
+        } catch (ArrayIndexOutOfBoundsException e) {
+            throw new ZiqException("deadline needs a date. Correct format: "
+                    + "deadline <description> /by d/M/yyyy HHmm (e.g. deadline submit report /by 2/22/2022 1200)");
         }
     }
 
@@ -167,7 +174,13 @@ public class Parser {
             Task task = new Event(description, startTime, endTime);
             addTaskAndSave(task, tasks, storage, ui);
         } catch (DateTimeParseException e) {
-            throw new ZiqException("invalid date format. use dd/mm/yyyy HHmm (e.g. 2/22/2022 1200)");
+            throw new ZiqException("invalid date format for event. Correct format: "
+                    + "event <description> /from d/M/yyyy HHmm /to d/M/yyyy HHmm "
+                    + "(e.g. event meeting /from 2/22/2022 1200 /to 2/22/2022 1400)");
+        } catch (ArrayIndexOutOfBoundsException e) {
+            throw new ZiqException("event needs both /from and /to with dates. Correct format: "
+                    + "event <description> /from d/M/yyyy HHmm /to d/M/yyyy HHmm "
+                    + "(e.g. event meeting /from 2/22/2022 1200 /to 2/22/2022 1400)");
         }
     }
 
@@ -191,7 +204,8 @@ public class Parser {
             ui.printLine("  " + removedTask);
             ui.printLine("now you have " + tasks.size() + " task(s) in the list.");
         } catch (NumberFormatException e) {
-            throw new ZiqException("invalid task number.");
+            throw new ZiqException("invalid task number. Correct format: delete <number> (e.g. delete 1). "
+                    + "Use 'list' to see task numbers.");
         }
     }
 
@@ -235,7 +249,8 @@ public class Parser {
                 }
             }
         } catch (DateTimeParseException e) {
-            throw new ZiqException("invalid date. use format d/M/yyyy (e.g. 2/22/2022)");
+            throw new ZiqException("invalid date for schedule. Correct format: schedule d/M/yyyy "
+                    + "(e.g. schedule 2/22/2022)");
         }
     }
 

@@ -84,7 +84,7 @@ public class Storage {
             return null;
         }
 
-        TaskType type = TaskType.fromCode(parts[TYPE_INDEX]);
+        TaskType type = TaskType.findTaskType(parts[TYPE_INDEX]);
         Task task = createTaskFromParts(type, parts);
         if (task != null && parts[STATUS_INDEX].equals(DONE_STATUS_CODE)) {
             task.markAsDone();

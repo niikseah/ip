@@ -5,21 +5,14 @@ on: [push, pull_request]
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
         platform: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.platform }}
 
     steps:
-      - name: Set up repository
-        uses: actions/checkout@master
-
-      - name: Set up repository
-        uses: actions/checkout@master
-        with:
-          ref: master
-
-      - name: Merge to master
-        run: git checkout --progress --force ${{ github.sha }}
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Validate Gradle Wrapper
         uses: gradle/actions/wrapper-validation@v3
@@ -33,6 +26,7 @@ jobs:
 
       - name: Build and check with Gradle
         run: ./gradlew check
+        shell: bash
 
       - name: Install dos2unix on Linux
         if: runner.os == 'Linux'
@@ -48,7 +42,7 @@ jobs:
         run: ./runtest.sh
 
       - name: Perform IO redirection test (Windows)
-        if: always() && runner.os == 'Windows'
+        if: runner.os == 'Windows'
         working-directory: ${{ github.workspace }}/text-ui-test
         shell: cmd
         run: runtest.bat

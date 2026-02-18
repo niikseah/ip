@@ -1,14 +1,17 @@
 package ziq;
 
+import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 /**
  * Controller for the main GUI.
@@ -29,6 +32,8 @@ public class MainWindow extends AnchorPane {
 
     private Image userImage;
     private Image ziqImage;
+
+    private PauseTransition scrollBarHideTransition;
 
     private static Image loadImage(String resourcePath) {
         var stream = MainWindow.class.getResourceAsStream(resourcePath);
@@ -51,7 +56,22 @@ public class MainWindow extends AnchorPane {
         ziqImage = loadImage("/images/ziq.jpg");
         dialogContainer.heightProperty().addListener((observable) -> scrollPane.setVvalue(1.0));
         dialogContainer.getChildren().add(DialogBox.getDukeDialog(
-                "Hello, I'm Ziq!\nPlease give me a command!\nIf you need help, enter 'help.", ziqImage));
+                "hi, i'm ziq!\nplease give me a command!\nif you need help, enter 'help'.", ziqImage));
+        setupScrollBarRevealOnScroll();
+    }
+
+    /**
+     * Shows the scroll bar when the user scrolls with the mouse wheel, then hides it after a delay.
+     */
+    private void setupScrollBarRevealOnScroll() {
+        scrollBarHideTransition = new PauseTransition(Duration.seconds(1.5));
+        scrollBarHideTransition.setOnFinished(e -> scrollPane.getStyleClass().remove("scrolling"));
+        scrollPane.addEventFilter(ScrollEvent.SCROLL, e -> {
+            if (!scrollPane.getStyleClass().contains("scrolling")) {
+                scrollPane.getStyleClass().add("scrolling");
+            }
+            scrollBarHideTransition.playFromStart();
+        });
     }
 
     /** Sets up Ziq instance. */

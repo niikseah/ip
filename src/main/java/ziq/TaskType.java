@@ -33,7 +33,7 @@ public enum TaskType {
      * @return the corresponding TaskType
      * @throws ZiqException if the code does not match any task type
      */
-    public static TaskType fromCode(String code) throws ZiqException {
+    public static TaskType findTaskType(String code) throws ZiqException {
         for (TaskType t : TaskType.values()) {
             if (t.getCode().equals(code)) {
                 return t;
