@@ -63,9 +63,10 @@ public class Storage {
                     loadedTasks.add(task);
                 }
             }
-        } catch (FileNotFoundException e) {
-            return loadedTasks;
         } catch (IOException e) {
+            if (e instanceof FileNotFoundException) {
+                return loadedTasks;
+            }
             String msg = e.getMessage();
             if (msg != null && (msg.toLowerCase().contains("access") || msg.toLowerCase().contains("permission"))) {
                 throw new ZiqException("Cannot read save file: access denied. Check file permissions for " + filePath);
@@ -95,7 +96,12 @@ public class Storage {
             return null;
         }
 
-        TaskType type = TaskType.findTaskType(parts[TYPE_INDEX]);
+        TaskType type;
+        try {
+            type = TaskType.findTaskType(parts[TYPE_INDEX]);
+        } catch (ZiqException e) {
+            return null;
+        }
         Task task = createTaskFromParts(type, parts);
         if (task != null && parts[STATUS_INDEX].equals(DONE_STATUS_CODE)) {
             task.markAsDone();

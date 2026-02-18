@@ -87,9 +87,12 @@ public class TaskList {
      *
      * @param index the index of the task to retrieve (0-based)
      * @return the task at the specified index
+     * @throws IndexOutOfBoundsException if the index is out of range
      */
     public Task get(int index) {
-        assert index >= 0 && index < tasks.size() : "index must be in range [0, size)";
+        if (index < 0 || index >= tasks.size()) {
+            throw new IndexOutOfBoundsException("index must be in range [0, size)");
+        }
         return tasks.get(index);
     }
 

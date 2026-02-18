@@ -61,6 +61,10 @@ public class Task {
         if (other == null) {
             return false;
         }
+        // Different types cannot have same details
+        if (this.getClass() != other.getClass()) {
+            return false;
+        }
         return description.equals(other.description);
     }
 

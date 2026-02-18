@@ -61,7 +61,7 @@ public class Parser {
             handleEvent(normalized, tasks, ui, storage);
         } else if (normalized.equalsIgnoreCase("delete") || normalized.startsWith("delete ")) {
             handleDelete(normalized, tasks, ui, storage);
-        } else if (normalized.startsWith("find ")) {
+        } else if (normalized.equalsIgnoreCase("find") || normalized.startsWith("find ")) {
             handleFind(normalized, tasks, ui);
         } else if (normalized.equalsIgnoreCase("schedule") || normalized.startsWith("schedule ")) {
             handleSchedule(normalized, tasks, ui);
