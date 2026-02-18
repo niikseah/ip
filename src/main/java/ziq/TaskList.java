@@ -1,6 +1,11 @@
 package ziq;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Manages a collection of tasks.
@@ -80,5 +85,41 @@ public class TaskList {
      */
     public int size() {
         return tasks.size();
+    }
+
+    /**
+     * Returns tasks that fall on the given date (deadlines due that day, events that span that day),
+     * sorted by time.
+     *
+     * @param date the date to view the schedule for
+     * @return list of tasks on that date, sorted by time
+     */
+    public ArrayList<Task> getTasksOnDate(LocalDate date) {
+        List<Task> onDate = tasks.stream()
+                .filter(task -> isTaskOnDate(task, date))
+                .sorted(Comparator.comparing(t -> getScheduleTime(t)))
+                .collect(Collectors.toList());
+        return new ArrayList<>(onDate);
+    }
+
+    private static boolean isTaskOnDate(Task task, LocalDate date) {
+        if (task instanceof Deadline) {
+            return ((Deadline) task).by().toLocalDate().equals(date);
+        }
+        if (task instanceof Event) {
+            Event e = (Event) task;
+            return !date.isBefore(e.from().toLocalDate()) && !date.isAfter(e.to().toLocalDate());
+        }
+        return false;
+    }
+
+    private static LocalDateTime getScheduleTime(Task task) {
+        if (task instanceof Deadline) {
+            return ((Deadline) task).by();
+        }
+        if (task instanceof Event) {
+            return ((Event) task).from();
+        }
+        return LocalDateTime.MIN;
     }
 }
