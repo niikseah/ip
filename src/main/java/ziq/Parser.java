@@ -1,17 +1,26 @@
 package ziq;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 
 /**
  * Parses and executes user commands.
- * Handles all command types: todo, deadline, event, mark, unmark, delete, list, find, bye.
+ * Handles all command types: todo, deadline, event, mark, unmark, delete, list, find, schedule, bye.
  */
 public class Parser {
 
     public static final DateTimeFormatter OUTPUT_FORMAT = DateTimeFormatter.ofPattern("MMM dd yyyy, h:mm a");
     private static final DateTimeFormatter INPUT_FORMAT = DateTimeFormatter.ofPattern("d/M/yyyy HHmm");
+    private static final DateTimeFormatter DATE_ONLY_FORMAT = DateTimeFormatter.ofPattern("d/M/yyyy");
+    private static final int COMMAND_DEADLINE_PREFIX_LENGTH = 9;
+    private static final int COMMAND_EVENT_PREFIX_LENGTH = 6;
+    private static final int COMMAND_DELETE_PREFIX_LENGTH = 7;
+    private static final int COMMAND_FIND_PREFIX_LENGTH = 5;
+    private static final int COMMAND_SCHEDULE_PREFIX_LENGTH = 9;
+    private static final int DISPLAY_INDEX_OFFSET = 1;
 
     /**
      * Parses and executes a user command.
@@ -50,9 +59,11 @@ public class Parser {
             handleDelete(trimmedInput, tasks, ui, storage);
         } else if (trimmedInput.startsWith("find ")) {
             handleFind(trimmedInput, tasks, ui);
+        } else if (trimmedInput.startsWith("schedule ")) {
+            handleSchedule(trimmedInput, tasks, ui);
         } else {
             throw new ZiqException("idk lol,,, only the following commands work: "
-                    + "todo, deadline, event, or find!");
+                    + "todo, deadline, event, find, or schedule!");
         }
 
         return false;
@@ -76,7 +87,7 @@ public class Parser {
             int index = taskNumber - DISPLAY_INDEX_OFFSET;
             Task task = tasks.get(index);
             
-            if (shouldMark) {
+            if (isMark) {
                 task.markAsDone();
                 ui.printLine("Task marked as done:");
             } else {
@@ -197,6 +208,35 @@ public class Parser {
         }
         String keyword = input.substring(COMMAND_FIND_PREFIX_LENGTH).trim().toLowerCase();
         printMatchingTasks(tasks, keyword, ui);
+    }
+
+    /**
+     * Handles the schedule command to view tasks on a specific date.
+     *
+     * @param input the user's input (e.g. "schedule 8/2/2026")
+     * @param tasks the task list to search
+     * @param ui the UI handler for output
+     * @throws ZiqException if the date format is invalid
+     */
+    private static void handleSchedule(String input, TaskList tasks, Ui ui) throws ZiqException {
+        if (input.length() <= COMMAND_SCHEDULE_PREFIX_LENGTH) {
+            throw new ZiqException("Schedule needs a date. Use: schedule d/M/yyyy (e.g. schedule 8/2/2026)");
+        }
+        try {
+            String dateStr = input.substring(COMMAND_SCHEDULE_PREFIX_LENGTH).trim();
+            LocalDate date = LocalDate.parse(dateStr, DATE_ONLY_FORMAT);
+            ArrayList<Task> onDate = tasks.getTasksOnDate(date);
+            ui.printLine("Schedule for " + date.format(DateTimeFormatter.ofPattern("MMM dd yyyy")) + ":");
+            if (onDate.isEmpty()) {
+                ui.printLine("  (no tasks on this date)");
+            } else {
+                for (int i = 0; i < onDate.size(); i++) {
+                    ui.printLine((i + DISPLAY_INDEX_OFFSET) + ". " + onDate.get(i));
+                }
+            }
+        } catch (DateTimeParseException e) {
+            throw new ZiqException("Invalid date. Use format d/M/yyyy (e.g. 8/2/2026)");
+        }
     }
 
     /**
