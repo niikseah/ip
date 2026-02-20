@@ -457,18 +457,18 @@ public class Parser {
      */
     private static void handleOrganise(String input, TaskList tasks, Ui ui) throws ZiqException {
         if (input.length() <= COMMAND_ORGANISE_PREFIX_LENGTH) {
-            throw new ZiqException("Organise needs a type. Correct format: organise tag or organise deadline");
+            throw new ZiqException("organise needs to know if it's by tag or deadline.");
         }
         String type = input.substring(COMMAND_ORGANISE_PREFIX_LENGTH).trim().toLowerCase();
         if (type.isEmpty()) {
-            throw new ZiqException("Organise type cannot be empty. Correct format: organise tag or organise deadline");
+            throw new ZiqException("organise must have a filter of either tag or deadline");
         }
         if (type.equals("tag")) {
             printTasksOrganisedByTag(tasks, ui);
         } else if (type.equals("deadline")) {
             printTasksOrganisedByDeadline(tasks, ui);
         } else {
-            throw new ZiqException("Invalid organise type. Use 'organise tag' or 'organise deadline'");
+            throw new ZiqException("invalid organise type. enter 'organise tag' or 'organise deadline'");
         }
     }
 

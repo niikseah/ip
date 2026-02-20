@@ -1,15 +1,15 @@
-# Ziq User Guide
+# ziq user guide
 
 // Product screenshot goes here
 
-Ziq is a friendly task management chatbot that helps you keep track of your todos, deadlines, and events. With a simple chat interface, you can add, manage, and organize your tasks effortlessly.
+ziq is a user-friendly task management chatbot that helps you keep track of your todos, deadlines, and events. 
 
 ## Quick Start
 
 1. Launch the application
 2. Type a command in the input field
 3. Press Enter or click Send
-4. Ziq will respond and help you manage your tasks!
+4. ziq will update you on the system status
 
 ## Features
 
@@ -23,44 +23,27 @@ Add a simple todo task without any date or time.
 
 **Example:** `todo read book`
 
-**Expected output:**
-```
-task added:
-  [ ] read book
-now you have 1 task(s) in the list.
-```
+
 
 #### Adding a Deadline
 
 Add a deadline task with a due date. Time is optional - if not specified, it defaults to midnight (00:00).
 
-**Format:** `deadline <description> /by DD/MM/YYYY [HHmm]`
+**Format:** `deadline <description> /by DDMMYYYY [HHmm]`
 
 **Examples:**
-- `deadline submit report /by 22/02/2022 1200`
-- `deadline finish assignment /by 15/03/2022`
+- `deadline submit report /by 22022022 1200`
+- `deadline finish assignment /by 15032022`
 
-**Expected output:**
-```
-task added:
-  [ ] submit report (by: Feb 22 2022, 12:00 PM)
-now you have 2 task(s) in the list.
-```
+
 
 #### Adding an Event
 
 Add an event task with a start and end time.
 
-**Format:** `event <description> /from d/M/yyyy HHmm /to d/M/yyyy HHmm`
+**Format:** `event <description> /from DDMMYYYY HHmm /to DDMMYYYY HHmm`
 
-**Example:** `event meeting /from 2/22/2022 1200 /to 2/22/2022 1400`
-
-**Expected output:**
-```
-task added:
-  [ ] meeting (from: Feb 22 2022, 12:00 PM to: Feb 22 2022, 2:00 PM)
-now you have 3 task(s) in the list.
-```
+**Example:** `event meeting /from 22022022 1200 /to 22022022 1400`
 
 ### Viewing Tasks
 
@@ -70,18 +53,7 @@ View all tasks in your list.
 
 **Format:** `list`
 
-**Expected output:**
-```
-here is your to-do list!
-1. [ ] read book
-2. [ ] submit report (by: Feb 22 2022, 12:00 PM)
-3. [ ] meeting (from: Feb 22 2022, 12:00 PM to: Feb 22 2022, 2:00 PM)
-```
 
-If your list is empty:
-```
-you don't have anything on your list right now!
-```
 
 ### Managing Tasks
 
@@ -93,12 +65,6 @@ Mark a task as completed.
 
 **Example:** `mark 1`
 
-**Expected output:**
-```
-task marked as done:
-  [✅] read book
-```
-
 #### Unmarking a Task
 
 Mark a completed task as not done.
@@ -107,11 +73,7 @@ Mark a completed task as not done.
 
 **Example:** `unmark 1`
 
-**Expected output:**
-```
-task marked as not done:
-  [ ] read book
-```
+
 
 #### Deleting a Task
 
@@ -121,23 +83,11 @@ Remove a task from your list.
 
 **Example:** `delete 2`
 
-**Expected output:**
-```
-task removed:
-  [ ] submit report (by: Feb 22 2022, 12:00 PM)
-now you have 2 task(s) in the list.
-```
-
 #### Clearing All Tasks
 
 Remove all tasks from your list at once.
 
 **Format:** `clear`
-
-**Expected output:**
-```
-all tasks cleared! (3 task(s) removed)
-```
 
 ### Finding Tasks
 
@@ -149,11 +99,35 @@ Find tasks that contain a specific keyword in their description.
 
 **Example:** `find book`
 
-**Expected output:**
-```
-here are the matching tasks in your list:
-1. [✅] read book
-```
+
+
+### Tagging Tasks
+
+#### Adding a Tag to a Task
+
+Add a tag to any task (todo, deadline, or event) for better organization.
+
+**Format:** `tag <index> <tag>`
+
+**Example:** `tag 1 work`
+
+### Organizing Tasks
+
+#### Organizing by Tag
+
+Group and display tasks organized by their tags. Tasks with the same tag are grouped together, and untagged tasks are shown separately.
+
+**Format:** `organise tag`
+
+**Example:** `organise tag`
+
+#### Organizing by Deadline
+
+Display tasks organized by deadline, with deadlines sorted by due date, followed by events sorted by start date, and finally todos.
+
+**Format:** `organise deadline`
+
+**Example:** `organise deadline`
 
 ### Viewing Schedule
 
@@ -161,22 +135,9 @@ here are the matching tasks in your list:
 
 View all tasks (deadlines and events) scheduled for a particular date.
 
-**Format:** `schedule DD/MM/YYYY`
+**Format:** `schedule DDMMYYYY` (or `DD` for day only, `DDMM` for day/month only)
 
-**Example:** `schedule 22/02/2022`
-
-**Expected output:**
-```
-schedule for Feb 22 2022:
-1. [ ] submit report (by: Feb 22 2022, 12:00 PM)
-2. [ ] meeting (from: Feb 22 2022, 12:00 PM to: Feb 22 2022, 2:00 PM)
-```
-
-If no tasks are scheduled for that date:
-```
-schedule for Feb 22 2022:
-  (no tasks on this date)
-```
+**Example:** `schedule 22022022` or `schedule 22` or `schedule 2202`
 
 ### Getting Help
 
@@ -186,58 +147,27 @@ Display a list of all available commands.
 
 **Format:** `help`
 
-**Expected output:**
-```
-here are the commands available:
-todo <description> - add a todo task
-
-deadline <description> /by DD/MM/YYYY [HHmm] - add a deadline task (time is optional)
-
-event <description> /from <date> /to <date> - add an event task
-
-mark <index> - mark a task as done
-
-unmark <index> - mark a task as not done
-
-delete <index> - delete a task
-
-find <keyword> - find tasks by keyword
-
-schedule <date> - view tasks on a specific date
-
-clear - remove all tasks
-
-help - display this list of commands
-
-bye - terminate Ziq
-```
-
-### Exiting the Application
-
-#### Saying Goodbye
-
-Close the application.
-
 **Format:** `bye`
 
 **Expected output:**
-```
-Bye. Hope to see you again!
-```
+
+
 
 ## Command Summary
 
 | Command | Format | Description |
 |---------|--------|-------------|
 | `todo` | `todo <description>` | Add a todo task |
-| `deadline` | `deadline <description> /by DD/MM/YYYY [HHmm]` | Add a deadline task |
-| `event` | `event <description> /from d/M/yyyy HHmm /to d/M/yyyy HHmm` | Add an event task |
+| `deadline` | `deadline <description> /by DDMMYYYY [HHmm]` | Add a deadline task |
+| `event` | `event <description> /from DDMMYYYY HHmm /to DDMMYYYY HHmm` | Add an event task |
 | `list` | `list` | List all tasks |
 | `mark` | `mark <index>` | Mark a task as done |
 | `unmark` | `unmark <index>` | Mark a task as not done |
 | `delete` | `delete <index>` | Delete a task |
 | `find` | `find <keyword>` | Find tasks by keyword |
-| `schedule` | `schedule DD/MM/YYYY` | View tasks on a date |
+| `schedule` | `schedule DDMMYYYY` (or `DD`, `DDMM`) | View tasks on a date |
+| `tag` | `tag <index> <tag>` | Add a tag to a task |
+| `organise` | `organise tag` or `organise deadline` | Organize tasks by tag or deadline |
 | `clear` | `clear` | Remove all tasks |
 | `help` | `help` | Show help message |
 | `bye` | `bye` | Exit the application |
@@ -245,9 +175,14 @@ Bye. Hope to see you again!
 ## Notes
 
 - Task indices start from 1 (not 0)
-- Dates for deadlines use `DD/MM/YYYY` format (e.g., `22/02/2022`)
-- Dates for events use `d/M/yyyy` format (e.g., `2/22/2022`)
+- Dates use `DDMMYYYY` format with no slashes (e.g., `22022022` for February 22, 2022)
+- For the `schedule` command, you can use partial dates:
+  - `DD` - uses current month and year (e.g., `22` for the 22nd of the current month)
+  - `DDMM` - uses current year (e.g., `2202` for February 22 of the current year)
+  - `DDMMYYYY` - full date (e.g., `22022022`)
 - Time format is `HHmm` (24-hour format, e.g., `1200` for 12:00 PM)
-- If no time is specified for a deadline, it defaults to midnight (00:00)
+- If no time is specified for a deadline, only the date is displayed 
 - Tasks are automatically saved to `data/ziq.txt`
 - Duplicate tasks (same description and details) are not allowed
+- Tags are color-coded for easy identification
+- Command keywords in your input are color-coded to match their task types (todo=green, deadline=red, event=yellow, tag=purple, organise=orange)
