@@ -52,7 +52,7 @@ public class Deadline extends Task {
      * Returns a string representation of this deadline task.
      * If time was not specified, only shows the date.
      *
-     * @return a string in the format "[D][status] description (by formatted date/time or date)"
+     * @return a string in the format "[D][status] description (by date/time) [#tag]"
      */
     @Override
     public String toString() {

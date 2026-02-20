@@ -27,7 +27,7 @@ public class DialogBox extends HBox {
 
     private static final Set<String> VALID_COMMANDS = Set.of(
             "bye", "list", "mark", "unmark", "todo", "deadline", "event", "delete", "find", "schedule",
-            "clear", "help");
+            "clear", "help", "tag");
 
     @FXML
     private VBox dialogWrapper;
@@ -81,6 +81,7 @@ public class DialogBox extends HBox {
             String firstWord = space < 0 ? trimmed : trimmed.substring(0, space);
             String rest = space < 0 ? "" : trimmed.substring(space);
             boolean validCommand = VALID_COMMANDS.contains(firstWord.toLowerCase());
+
             if (!validCommand && !firstWord.isEmpty()) {
                 Text first = new Text(firstWord);
                 first.setFill(Color.MAROON);
@@ -88,19 +89,147 @@ public class DialogBox extends HBox {
                 restText.setFill(Color.BLACK);
                 dialog.getChildren().addAll(first, restText);
             } else {
-                Text full = new Text(text);
-                full.setFill(Color.BLACK);
-                dialog.getChildren().add(full);
+                // Color task type commands with darker versions of their task type colors
+                Text firstWordText = new Text(firstWord);
+                String lowerFirstWord = firstWord.toLowerCase();
+                if (lowerFirstWord.equals("todo")) {
+                    firstWordText.setFill(Color.web("#00B359")); // Darker green for todo
+                } else if (lowerFirstWord.equals("deadline")) {
+                    firstWordText.setFill(Color.web("#C0392B")); // Darker red for deadline
+                } else if (lowerFirstWord.equals("event")) {
+                    firstWordText.setFill(Color.web("#F1C40F")); // Darker yellow for event
+                } else if (lowerFirstWord.equals("tag")) {
+                    firstWordText.setFill(Color.web("#8E44AD")); // Purple for tag
+                } else {
+                    firstWordText.setFill(Color.BLACK);
+                }
+
+                Text restText = new Text(rest);
+                restText.setFill(Color.BLACK);
+                dialog.getChildren().addAll(firstWordText, restText);
             }
         } else {
             if (text.startsWith("here are the commands")) {
                 formatHelpText(text);
             } else {
-                Text full = new Text(text);
-                full.setFill(Color.WHITE);
-                dialog.getChildren().add(full);
+                formatTextWithTags(text);
             }
         }
+    }
+
+    /**
+     * Formats regular text, detecting task types and tags, coloring them appropriately.
+     * Task types [E], [D], [T] are colored differently, and tags are colored with readable colors.
+     *
+     * @param text the text to format
+     */
+    private void formatTextWithTags(String text) {
+        int lastIndex = 0;
+        int textLength = text.length();
+
+        while (lastIndex < textLength) {
+            // Look for task type indicators first: [E], [D], [T]
+            int taskTypeStart = text.indexOf("[", lastIndex);
+            if (taskTypeStart >= 0 && taskTypeStart + 2 < textLength) {
+                char nextChar = text.charAt(taskTypeStart + 1);
+                if ((nextChar == 'E' || nextChar == 'D' || nextChar == 'T' || nextChar == '✅' || nextChar == ' ')
+                        && text.charAt(taskTypeStart + 2) == ']') {
+                    // Found a task type or status indicator
+                    // Add text before task type
+                    if (taskTypeStart > lastIndex) {
+                        Text before = new Text(text.substring(lastIndex, taskTypeStart));
+                        before.setFill(Color.WHITE);
+                        dialog.getChildren().add(before);
+                    }
+
+                    // Color the task type indicator
+                    Text taskType = new Text(text.substring(taskTypeStart, taskTypeStart + 3));
+                    if (nextChar == 'E') {
+                        taskType.setFill(Color.web("#FFEB3B")); // Bright yellow for Events
+                    } else if (nextChar == 'D') {
+                        taskType.setFill(Color.web("#E74C3C")); // Red for Deadlines
+                    } else if (nextChar == 'T') {
+                        taskType.setFill(Color.web("#00FF7F")); // Bright green for Todos
+                    } else {
+                        // Status indicator (✅ or space)
+                        taskType.setFill(Color.WHITE);
+                    }
+                    dialog.getChildren().add(taskType);
+                    lastIndex = taskTypeStart + 3;
+                    continue;
+                }
+            }
+
+            // Look for tags: [tag] (not task type indicators)
+            int tagStart = text.indexOf(" [", lastIndex);
+            if (tagStart < 0) {
+                // No more tags, add remaining text
+                if (lastIndex < textLength) {
+                    Text remaining = new Text(text.substring(lastIndex));
+                    remaining.setFill(Color.WHITE);
+                    dialog.getChildren().add(remaining);
+                }
+                break;
+            }
+
+            // Add text before tag
+            if (tagStart > lastIndex) {
+                Text beforeTag = new Text(text.substring(lastIndex, tagStart));
+                beforeTag.setFill(Color.WHITE);
+                dialog.getChildren().add(beforeTag);
+            }
+
+            // Find tag end
+            int tagEnd = text.indexOf("]", tagStart + 2);
+            if (tagEnd < 0) {
+                // No closing bracket, add rest as normal text
+                Text remaining = new Text(text.substring(tagStart));
+                remaining.setFill(Color.WHITE);
+                dialog.getChildren().add(remaining);
+                break;
+            }
+
+            // Extract tag (without brackets)
+            String tag = text.substring(tagStart + 2, tagEnd);
+            Text tagText = new Text(" [" + tag + "]");
+            tagText.setFill(getTagColor(tag));
+            dialog.getChildren().add(tagText);
+
+            lastIndex = tagEnd + 1;
+        }
+    }
+
+    /**
+     * Generates a consistent, readable color for a tag based on its name.
+     * Same tag name will always produce the same color.
+     * Colors are chosen from a palette of vibrant, readable colors.
+     *
+     * @param tagName the tag name
+     * @return a Color for the tag
+     */
+    private Color getTagColor(String tagName) {
+        // Predefined palette of readable, vibrant colors
+        Color[] colorPalette = {
+            Color.web("#FFD93D"), // Yellow
+            Color.web("#6BCB77"), // Green
+            Color.web("#4D96FF"), // Blue
+            Color.web("#FF6B6B"), // Red
+            Color.web("#A8E6CF"), // Light green
+            Color.web("#FFD3A5"), // Peach
+            Color.web("#C7CEEA"), // Lavender
+            Color.web("#FFB6C1"), // Light pink
+            Color.web("#87CEEB"), // Sky blue
+            Color.web("#F0E68C"), // Khaki
+            Color.web("#DDA0DD"), // Plum
+            Color.web("#98D8C8"), // Mint
+            Color.web("#FFA07A"), // Light salmon
+            Color.web("#B0E0E6"), // Powder blue
+            Color.web("#FFE4B5") // Moccasin
+        };
+
+        // Use hash to select a color from palette
+        int hash = Math.abs(tagName.hashCode());
+        return colorPalette[hash % colorPalette.length];
     }
 
     /**

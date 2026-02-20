@@ -7,6 +7,7 @@ package ziq;
 public class Task {
     protected String description;
     protected boolean isDone;
+    protected String tag;
 
     /**
      * Constructs a new Task with the given description.
@@ -16,6 +17,7 @@ public class Task {
     public Task(String description) {
         this.description = description;
         this.isDone = false;
+        this.tag = null;
     }
 
     /**
@@ -51,6 +53,24 @@ public class Task {
     }
 
     /**
+     * Returns the tag of this task, or null if no tag is set.
+     *
+     * @return the tag, or null if not set
+     */
+    public String getTag() {
+        return tag;
+    }
+
+    /**
+     * Sets the tag for this task.
+     *
+     * @param tag the tag to set
+     */
+    public void setTag(String tag) {
+        this.tag = tag;
+    }
+
+    /**
      * Returns true if this task has the same logical details as the other (description and type-specific fields).
      * Used to detect duplicate tasks.
      *
@@ -71,11 +91,12 @@ public class Task {
     /**
      * Returns a string representation of this task.
      *
-     * @return a string in the format "[status] description"
+     * @return a string in the format "[status] description [tag]"
      */
     @Override
     public String toString() {
-        return "[" + getStatus() + "] " + description;
+        String tagStr = (tag != null && !tag.isEmpty()) ? " [" + tag + "]" : "";
+        return "[" + getStatus() + "] " + description + tagStr;
     }
 }
 

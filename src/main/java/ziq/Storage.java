@@ -19,15 +19,18 @@ public class Storage {
     private static final String DONE_STATUS_CODE = "1";
     private static final String NOT_DONE_STATUS_CODE = "0";
     private static final int MINIMUM_PARTS_COUNT = 3;
-    private static final int TODO_PARTS_COUNT = 3;
-    private static final int DEADLINE_PARTS_COUNT = 4;
-    private static final int EVENT_PARTS_COUNT = 5;
+    private static final int TODO_PARTS_COUNT = 4;
+    private static final int DEADLINE_PARTS_COUNT = 5;
+    private static final int EVENT_PARTS_COUNT = 6;
     private static final int TYPE_INDEX = 0;
     private static final int STATUS_INDEX = 1;
     private static final int DESCRIPTION_INDEX = 2;
+    private static final int TODO_TAG_INDEX = 3;
     private static final int DEADLINE_TIME_INDEX = 3;
+    private static final int DEADLINE_TAG_INDEX = 4;
     private static final int EVENT_START_INDEX = 3;
     private static final int EVENT_END_INDEX = 4;
+    private static final int EVENT_TAG_INDEX = 5;
 
     private final String filePath;
     private final Ui ui;
@@ -136,26 +139,41 @@ public class Storage {
         try {
             switch (type) {
             case TODO:
-                if (parts.length < TODO_PARTS_COUNT) {
+                if (parts.length < TODO_PARTS_COUNT - 1) {
                     return null;
                 }
-                return new Todo(parts[DESCRIPTION_INDEX]);
+                Todo todo = new Todo(parts[DESCRIPTION_INDEX]);
+                // Tag is optional (for backward compatibility with old save files)
+                if (parts.length >= TODO_PARTS_COUNT && !parts[TODO_TAG_INDEX].isEmpty()) {
+                    todo.setTag(parts[TODO_TAG_INDEX]);
+                }
+                return todo;
             case DEADLINE:
-                if (parts.length < DEADLINE_PARTS_COUNT) {
+                if (parts.length < DEADLINE_PARTS_COUNT - 1) {
                     return null;
                 }
                 LocalDateTime deadlineTime = LocalDateTime.parse(parts[DEADLINE_TIME_INDEX]);
                 // If time is exactly midnight (00:00:00), assume no time was originally specified
                 boolean hasTime = !(deadlineTime.getHour() == 0 && deadlineTime.getMinute() == 0
                         && deadlineTime.getSecond() == 0);
-                return new Deadline(parts[DESCRIPTION_INDEX], deadlineTime, hasTime);
+                Deadline deadline = new Deadline(parts[DESCRIPTION_INDEX], deadlineTime, hasTime);
+                // Tag is optional (for backward compatibility with old save files)
+                if (parts.length >= DEADLINE_PARTS_COUNT && !parts[DEADLINE_TAG_INDEX].isEmpty()) {
+                    deadline.setTag(parts[DEADLINE_TAG_INDEX]);
+                }
+                return deadline;
             case EVENT:
-                if (parts.length < EVENT_PARTS_COUNT) {
+                if (parts.length < EVENT_PARTS_COUNT - 1) {
                     return null;
                 }
                 LocalDateTime startTime = LocalDateTime.parse(parts[EVENT_START_INDEX]);
                 LocalDateTime endTime = LocalDateTime.parse(parts[EVENT_END_INDEX]);
-                return new Event(parts[DESCRIPTION_INDEX], startTime, endTime);
+                Event event = new Event(parts[DESCRIPTION_INDEX], startTime, endTime);
+                // Tag is optional (for backward compatibility with old save files)
+                if (parts.length >= EVENT_PARTS_COUNT && !parts[EVENT_TAG_INDEX].isEmpty()) {
+                    event.setTag(parts[EVENT_TAG_INDEX]);
+                }
+                return event;
             default:
                 return null;
             }
@@ -227,13 +245,21 @@ public class Storage {
         line.append(statusCode).append(FILE_DELIMITER);
         line.append(task.description());
 
+        String tag = task.getTag();
+        String tagStr = (tag != null && !tag.isEmpty()) ? tag : "";
+
         if (task instanceof Deadline) {
             Deadline deadline = (Deadline) task;
             line.append(FILE_DELIMITER).append(deadline.by());
+            line.append(FILE_DELIMITER).append(tagStr);
         } else if (task instanceof Event) {
             Event event = (Event) task;
             line.append(FILE_DELIMITER).append(event.from());
             line.append(FILE_DELIMITER).append(event.to());
+            line.append(FILE_DELIMITER).append(tagStr);
+        } else {
+            // Todo
+            line.append(FILE_DELIMITER).append(tagStr);
         }
         return line.toString();
     }

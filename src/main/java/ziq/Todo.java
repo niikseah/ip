@@ -16,7 +16,7 @@ public class Todo extends Task {
     /**
      * Returns a string representation of this todo task.
      *
-     * @return a string in the format "[T][status] description"
+     * @return a string in the format "[T][status] description [#tag]"
      */
     @Override
     public String toString() {

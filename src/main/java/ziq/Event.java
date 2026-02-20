@@ -58,7 +58,7 @@ public class Event extends Task {
     /**
      * Returns a string representation of this event task.
      *
-     * @return a string in the format "[E][status] description (from: formatted date/time to: formatted date/time)"
+     * @return a string in the format "[E][status] description (from: date/time to: date/time) [#tag]"
      */
     @Override
     public String toString() {

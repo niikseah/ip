@@ -84,7 +84,7 @@ public class ParserTest {
 
     @Test
     public void executeCommand_deadline_addsTask() throws ZiqException {
-        Parser.executeCommand("deadline submit /by 22/02/2022 1200", tasks, ui, storage);
+        Parser.executeCommand("deadline submit /by 22022022 1200", tasks, ui, storage);
         assertEquals(1, tasks.size());
         assertTrue(tasks.get(0) instanceof Deadline);
     }
@@ -97,24 +97,24 @@ public class ParserTest {
     @Test
     public void executeCommand_deadlineDuplicateBy_throwsException() {
         assertThrows(ZiqException.class, () -> Parser.executeCommand(
-                "deadline submit /by 22/02/2022 1200 /by 23/02/2022 1200", tasks, ui, storage));
+                "deadline submit /by 22022022 1200 /by 23022022 1200", tasks, ui, storage));
     }
 
     @Test
     public void executeCommand_deadlineInvalidDate_throwsException() {
         assertThrows(ZiqException.class, () -> Parser.executeCommand(
-                "deadline submit /by 32/01/2022 1200", tasks, ui, storage));
+                "deadline submit /by 32012022 1200", tasks, ui, storage));
     }
 
     @Test
     public void executeCommand_deadlineEmptyDescription_throwsException() {
         assertThrows(ZiqException.class, () -> Parser.executeCommand(
-                "deadline /by 22/02/2022 1200", tasks, ui, storage));
+                "deadline /by 22022022 1200", tasks, ui, storage));
     }
 
     @Test
     public void executeCommand_event_addsTask() throws ZiqException {
-        Parser.executeCommand("event meeting /from 22/2/2022 1200 /to 22/2/2022 1400", tasks, ui, storage);
+        Parser.executeCommand("event meeting /from 22022022 1200 /to 22022022 1400", tasks, ui, storage);
         assertEquals(1, tasks.size());
         assertTrue(tasks.get(0) instanceof Event);
     }
@@ -122,25 +122,25 @@ public class ParserTest {
     @Test
     public void executeCommand_eventStartAfterEnd_throwsException() {
         assertThrows(ZiqException.class, () -> Parser.executeCommand(
-                "event meeting /from 22/2/2022 1400 /to 22/2/2022 1200", tasks, ui, storage));
+                "event meeting /from 22022022 1400 /to 22022022 1200", tasks, ui, storage));
     }
 
     @Test
     public void executeCommand_eventStartEqualsEnd_throwsException() {
         assertThrows(ZiqException.class, () -> Parser.executeCommand(
-                "event meeting /from 22/2/2022 1200 /to 22/2/2022 1200", tasks, ui, storage));
+                "event meeting /from 22022022 1200 /to 22022022 1200", tasks, ui, storage));
     }
 
     @Test
     public void executeCommand_eventMissingFrom_throwsException() {
         assertThrows(ZiqException.class, () -> Parser.executeCommand(
-                "event meeting /to 22/2/2022 1400", tasks, ui, storage));
+                "event meeting /to 22022022 1400", tasks, ui, storage));
     }
 
     @Test
     public void executeCommand_eventDuplicateFrom_throwsException() {
         assertThrows(ZiqException.class, () -> Parser.executeCommand(
-                "event meeting /from 22/2/2022 1200 /from 22/2/2022 1300 /to 22/2/2022 1400", tasks, ui, storage));
+                "event meeting /from 22022022 1200 /from 22022022 1300 /to 22022022 1400", tasks, ui, storage));
     }
 
     @Test
@@ -229,7 +229,7 @@ public class ParserTest {
     public void executeCommand_schedule_validDate() throws ZiqException {
         LocalDateTime by = LocalDateTime.of(2022, 2, 22, 12, 0);
         tasks.add(new Deadline("submit", by, true));
-        Parser.executeCommand("schedule 22/02/2022", tasks, ui, storage);
+        Parser.executeCommand("schedule 22022022", tasks, ui, storage);
         String output = outputStream.toString();
         assertTrue(output.contains("schedule"));
         assertTrue(output.contains("submit"));
@@ -237,7 +237,7 @@ public class ParserTest {
 
     @Test
     public void executeCommand_scheduleInvalidDate_throwsException() {
-        assertThrows(ZiqException.class, () -> Parser.executeCommand("schedule 32/1/2022", tasks, ui, storage));
+        assertThrows(ZiqException.class, () -> Parser.executeCommand("schedule 32012022", tasks, ui, storage));
     }
 
     @Test
@@ -253,16 +253,16 @@ public class ParserTest {
 
     @Test
     public void executeCommand_duplicateDeadline_throwsException() throws ZiqException {
-        Parser.executeCommand("deadline submit /by 22/02/2022 1200", tasks, ui, storage);
+        Parser.executeCommand("deadline submit /by 22022022 1200", tasks, ui, storage);
         assertThrows(ZiqException.class, () -> Parser.executeCommand(
-                "deadline submit /by 22/02/2022 1200", tasks, ui, storage));
+                "deadline submit /by 22022022 1200", tasks, ui, storage));
     }
 
     @Test
     public void executeCommand_duplicateEvent_throwsException() throws ZiqException {
-        Parser.executeCommand("event meeting /from 22/2/2022 1200 /to 22/2/2022 1400", tasks, ui, storage);
+        Parser.executeCommand("event meeting /from 22022022 1200 /to 22022022 1400", tasks, ui, storage);
         assertThrows(ZiqException.class, () -> Parser.executeCommand(
-                "event meeting /from 22/2/2022 1200 /to 22/2/2022 1400", tasks, ui, storage));
+                "event meeting /from 22022022 1200 /to 22022022 1400", tasks, ui, storage));
     }
 
     @Test

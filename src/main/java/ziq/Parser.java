@@ -13,15 +13,16 @@ import java.util.ArrayList;
 public class Parser {
 
     public static final DateTimeFormatter OUTPUT_FORMAT = DateTimeFormatter.ofPattern("MMM dd yyyy, h:mm a");
-    private static final DateTimeFormatter INPUT_FORMAT = DateTimeFormatter.ofPattern("d/M/yyyy HHmm");
-    private static final DateTimeFormatter DEADLINE_INPUT_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HHmm");
-    private static final DateTimeFormatter DATE_ONLY_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter INPUT_FORMAT = DateTimeFormatter.ofPattern("ddMMyyyy HHmm");
+    private static final DateTimeFormatter DEADLINE_INPUT_FORMAT = DateTimeFormatter.ofPattern("ddMMyyyy HHmm");
+    private static final DateTimeFormatter DATE_ONLY_FORMAT = DateTimeFormatter.ofPattern("ddMMyyyy");
     private static final int COMMAND_TODO_PREFIX_LENGTH = 5;
     private static final int COMMAND_DEADLINE_PREFIX_LENGTH = 9;
     private static final int COMMAND_EVENT_PREFIX_LENGTH = 6;
     private static final int COMMAND_DELETE_PREFIX_LENGTH = 7;
     private static final int COMMAND_FIND_PREFIX_LENGTH = 5;
     private static final int COMMAND_SCHEDULE_PREFIX_LENGTH = 9;
+    private static final int COMMAND_TAG_PREFIX_LENGTH = 4;
     private static final int DISPLAY_INDEX_OFFSET = 1;
 
     /**
@@ -70,6 +71,8 @@ public class Parser {
             handleFind(normalized, tasks, ui);
         } else if (normalized.equalsIgnoreCase("schedule") || normalized.startsWith("schedule ")) {
             handleSchedule(normalized, tasks, ui);
+        } else if (normalized.equalsIgnoreCase("tag") || normalized.startsWith("tag ")) {
+            handleTag(normalized, tasks, ui, storage);
         } else if (normalized.toLowerCase().startsWith("help")) {
             getHelp(ui);
         } else {
@@ -182,23 +185,23 @@ public class Parser {
     private static void handleDeadline(String input, TaskList tasks, Ui ui, Storage storage) throws ZiqException {
         if (!input.contains(" /by ")) {
             throw new ZiqException("deadline must have '/by' with date. e.g."
-                    + "deadline <description> /by DD/MM/YYYY HHmm (e.g. deadline submit report /by 22/02/2022 1200)");
+                    + "deadline <description> /by DDMMYYYY [HHmm] (e.g. deadline submit report /by 22022022 1200)");
         }
         String commandBody = input.substring(COMMAND_DEADLINE_PREFIX_LENGTH).trim();
         String[] parts = commandBody.split(" /by ", -1);
         if (parts.length != 2) {
             throw new ZiqException("deadline can only one '/by'. e.g."
-                    + "deadline <description> /by DD/MM/YYYY HHmm (e.g. deadline submit report /by 22/02/2022 1200)");
+                    + "deadline <description> /by DDMMYYYY [HHmm] (e.g. deadline submit report /by 22022022 1200)");
         }
         String description = parts[0].trim();
         String dateTimeStr = parts[1].trim();
         if (description.isEmpty()) {
             throw new ZiqException("description of deadline cannot be empty. e.g."
-                    + "deadline <description> /by DD/MM/YYYY HHmm");
+                    + "deadline <description> /by DDMMYYYY [HHmm]");
         }
         if (dateTimeStr.isEmpty()) {
             throw new ZiqException("deadline date cannot be empty. e.g."
-                    + "deadline <description> /by DD/MM/YYYY HHmm (e.g. /by 22/02/2022 1200)");
+                    + "deadline <description> /by DDMMYYYY [HHmm] (e.g. /by 22022022 1200)");
         }
         try {
             LocalDateTime deadlineTime;
@@ -217,8 +220,8 @@ public class Parser {
             Task task = new Deadline(description, deadlineTime, hasTime);
             addTaskAndSave(task, tasks, storage, ui);
         } catch (DateTimeParseException e) {
-            throw new ZiqException("invalid date for deadline. use dd/mm/yyyy HHmm. "
-                    + "(e.g. 22/02/2022 1200 or 22/02/2022). dates like Feb 30 are not allowed.");
+            throw new ZiqException("invalid date for deadline. use DDMMYYYY [HHmm]. "
+                    + "(e.g. 22022022 1200 or 22022022). dates like Feb 30 are not allowed.");
         }
     }
 
@@ -234,25 +237,25 @@ public class Parser {
     private static void handleEvent(String input, TaskList tasks, Ui ui, Storage storage) throws ZiqException {
         if (!input.contains(" /from ") || !input.contains(" /to ")) {
             throw new ZiqException("event must include '/from' and '/to' with date and time. e.g."
-                    + "event <description> /from d/M/yyyy HHmm /to d/M/yyyy HHmm "
-                    + "(e.g. event meeting /from 2/22/2022 1200 /to 2/22/2022 1400)");
+                    + "event <description> /from DDMMYYYY HHmm /to DDMMYYYY HHmm "
+                    + "(e.g. event meeting /from 22022022 1200 /to 22022022 1400)");
         }
         String commandBody = input.substring(COMMAND_EVENT_PREFIX_LENGTH).trim();
         String[] parts = commandBody.split(" /from | /to ", -1);
         if (parts.length != 3) {
             throw new ZiqException("event can only one '/from' and one '/to'. e.g."
-                    + "event <description> /from d/M/yyyy HHmm /to d/M/yyyy HHmm");
+                    + "event <description> /from DDMMYYYY HHmm /to DDMMYYYY HHmm");
         }
         String description = parts[0].trim();
         String fromStr = parts[1].trim();
         String toStr = parts[2].trim();
         if (description.isEmpty()) {
             throw new ZiqException("description of event cannot be empty. e.g."
-                    + "event <description> /from d/M/yyyy HHmm /to d/M/yyyy HHmm");
+                    + "event <description> /from DDMMYYYY HHmm /to DDMMYYYY HHmm");
         }
         if (fromStr.isEmpty() || toStr.isEmpty()) {
             throw new ZiqException("event must have both /from and /to dates. e.g."
-                    + "event <description> /from d/M/yyyy HHmm /to d/M/yyyy HHmm");
+                    + "event <description> /from DDMMYYYY HHmm /to DDMMYYYY HHmm");
         }
         try {
             LocalDateTime startTime = LocalDateTime.parse(fromStr, INPUT_FORMAT);
@@ -263,7 +266,7 @@ public class Parser {
             Task task = new Event(description, startTime, endTime);
             addTaskAndSave(task, tasks, storage, ui);
         } catch (DateTimeParseException e) {
-            throw new ZiqException("invalid date for event. use dd/mm/yyyy HHmm. "
+            throw new ZiqException("invalid date for event. use DDMMYYYY HHmm. "
                     + "dates like Feb 30 are not allowed.");
         }
     }
@@ -331,20 +334,20 @@ public class Parser {
      * Handles the schedule command to view tasks on a specific date.
      * Supports partial dates: missing year/month/day defaults to current year/month/day.
      *
-     * @param input the user's input (e.g. "schedule 8/2/2026" or "schedule 22" or "schedule 22/02")
+     * @param input the user's input (e.g. "schedule 08022026" or "schedule 22" or "schedule 2202")
      * @param tasks the task list to search
      * @param ui the UI handler for output
      * @throws ZiqException if the date format is invalid
      */
     private static void handleSchedule(String input, TaskList tasks, Ui ui) throws ZiqException {
         if (input.length() <= COMMAND_SCHEDULE_PREFIX_LENGTH) {
-            throw new ZiqException("Schedule needs a date. Correct format: schedule DD/MM/YYYY "
-                    + "(e.g. schedule 22/02/2022 or schedule 22)");
+            throw new ZiqException("Schedule needs a date. Correct format: schedule DDMMYYYY "
+                    + "(e.g. schedule 22022022 or schedule 22)");
         }
         String dateStr = input.substring(COMMAND_SCHEDULE_PREFIX_LENGTH).trim();
         if (dateStr.isEmpty()) {
-            throw new ZiqException("Schedule date cannot be empty. Correct format: schedule DD/MM/YYYY "
-                    + "(e.g. schedule 22/02/2022 or schedule 22)");
+            throw new ZiqException("Schedule date cannot be empty. Correct format: schedule DDMMYYYY "
+                    + "(e.g. schedule 22022022 or schedule 22)");
         }
         try {
             LocalDate date = parsePartialDate(dateStr);
@@ -358,37 +361,81 @@ public class Parser {
                 }
             }
         } catch (DateTimeParseException | NumberFormatException e) {
-            throw new ZiqException("Invalid date for schedule. Use DD, DD/MM, or DD/MM/YYYY "
-                    + "(e.g. schedule 22, schedule 22/02, or schedule 22/02/2022). "
+            throw new ZiqException("Invalid date for schedule. Use DD, DDMM, or DDMMYYYY "
+                    + "(e.g. schedule 22, schedule 2202, or schedule 22022022). "
                     + "Dates like Feb 30 are not allowed.");
         }
     }
 
     /**
-     * Parses a partial date string, filling in missing parts with current date values.
-     * Supports formats: DD (day only), DD/MM (day/month), DD/MM/YYYY (full date).
+     * Handles the tag command to add a tag to a task.
      *
-     * @param dateStr the date string to parse
+     * @param input the user's input command (e.g. "tag 1 meeting")
+     * @param tasks the task list to modify
+     * @param ui the UI handler for output
+     * @param storage the storage handler for saving tasks
+     * @throws ZiqException if the task index is invalid
+     */
+    private static void handleTag(String input, TaskList tasks, Ui ui, Storage storage) throws ZiqException {
+        String[] parts = input.split(" ", 3);
+        if (parts.length < 3 || parts[2].trim().isEmpty()) {
+            throw new ZiqException("tag command needs task number and tag. e.g."
+                    + "(e.g. tag 1 meeting)");
+        }
+        try {
+            int taskNumber = Integer.parseInt(parts[1].trim());
+            int index = taskNumber - DISPLAY_INDEX_OFFSET;
+            if (index < 0 || taskNumber < 1) {
+                throw new ZiqException("task number must be at least 1. e.g."
+                        + " enter 'list' to see task numbers.");
+            }
+            Task task = tasks.get(index);
+            String tag = parts[2].trim();
+            task.setTag(tag);
+            try {
+                storage.save(tasks.getTaskList());
+                ui.printLine("tag added to task:");
+                ui.printLine("  " + task);
+            } catch (ZiqException e) {
+                // Rollback: remove tag if save failed
+                task.setTag(null);
+                throw new ZiqException("tag was added but could not be saved: " + e.getMessage());
+            }
+        } catch (IndexOutOfBoundsException e) {
+            throw new ZiqException("invalid task number. e.g."
+                    + " enter 'list' to see task numbers.");
+        } catch (NumberFormatException e) {
+            throw new ZiqException("task number must be a number. e.g."
+                    + " enter 'list' to see task numbers.");
+        }
+    }
+
+    /**
+     * Parses a partial date string, filling in missing parts with current date values.
+     * Supports formats: DD (day only), DDMM (day+month), DDMMYYYY (full date).
+     *
+     * @param dateStr the date string to parse (no slashes)
      * @return a LocalDate with missing parts filled from current date
      * @throws DateTimeParseException if the date format is invalid
      * @throws NumberFormatException if the date parts are not valid numbers
      */
     private static LocalDate parsePartialDate(String dateStr) throws DateTimeParseException, NumberFormatException {
         LocalDate now = LocalDate.now();
-        String[] parts = dateStr.split("/");
+        String digits = dateStr.replaceAll("\\s", "");
+        int len = digits.length();
 
-        if (parts.length == 1) {
-            // Only day provided - use current month and year
-            int day = Integer.parseInt(parts[0].trim());
+        if (len == 2) {
+            // DD only - use current month and year
+            int day = Integer.parseInt(digits.substring(0, 2));
             return LocalDate.of(now.getYear(), now.getMonth(), day);
-        } else if (parts.length == 2) {
-            // Day and month provided - use current year
-            int day = Integer.parseInt(parts[0].trim());
-            int month = Integer.parseInt(parts[1].trim());
+        } else if (len == 4) {
+            // DDMM - use current year
+            int day = Integer.parseInt(digits.substring(0, 2));
+            int month = Integer.parseInt(digits.substring(2, 4));
             return LocalDate.of(now.getYear(), month, day);
-        } else if (parts.length == 3) {
-            // Full date provided
-            return LocalDate.parse(dateStr, DATE_ONLY_FORMAT);
+        } else if (len == 8) {
+            // DDMMYYYY
+            return LocalDate.parse(digits, DATE_ONLY_FORMAT);
         } else {
             throw new DateTimeParseException("Invalid date format", dateStr, 0);
         }
@@ -455,8 +502,8 @@ public class Parser {
      */
     private static void addTaskAndSave(Task task, TaskList tasks, Storage storage, Ui ui) throws ZiqException {
         if (tasks.containsDuplicateOf(task)) {
-            throw new ZiqException("A task with the same details already exists in the list. "
-                    + "Use a different description or date.");
+            throw new ZiqException("a task with the same details already exists in the list. "
+                    + "use a different description or date.");
         }
         tasks.add(task);
         try {
@@ -467,7 +514,7 @@ public class Parser {
         } catch (ZiqException e) {
             // Rollback: remove the task if save failed
             tasks.getTaskList().remove(task);
-            throw new ZiqException("Task was added but could not be saved: " + e.getMessage());
+            throw new ZiqException("task was added but could not be saved: " + e.getMessage());
         }
     }
 
@@ -489,7 +536,7 @@ public class Parser {
         } catch (ZiqException e) {
             // Rollback: restore tasks if save failed
             tasks.getTaskList().addAll(backup);
-            throw new ZiqException("Tasks were cleared but could not be saved: " + e.getMessage());
+            throw new ZiqException("tasks were cleared but could not be saved: " + e.getMessage());
         }
     }
 
@@ -500,13 +547,12 @@ public class Parser {
      */
     private static void getHelp(Ui ui) {
         ui.printLine("here are the commands available:");
-        ui.printLine("---");
         ui.printLine("");
         ui.printLine("todo <description> - add a todo task");
         ui.printLine("");
-        ui.printLine("deadline <description> /by DD/MM/YYYY HHmm - add a deadline task, time is optional");
+        ui.printLine("deadline <description> /by DDMMYYYY [HHmm] - add a deadline task, time is optional");
         ui.printLine("");
-        ui.printLine("event <description> /from <date> /to <date> - add an event task");
+        ui.printLine("event <description> /from DDMMYYYY HHmm /to DDMMYYYY HHmm - add an event task");
         ui.printLine("");
         ui.printLine("mark <index> - mark a task as done");
         ui.printLine("");
@@ -516,7 +562,9 @@ public class Parser {
         ui.printLine("");
         ui.printLine("find <keyword> - find tasks by keyword");
         ui.printLine("");
-        ui.printLine("schedule <date> - view tasks on a specific date");
+        ui.printLine("schedule DDMMYYYY - view tasks on a specific date (or DD, DDMM for partial)");
+        ui.printLine("");
+        ui.printLine("tag <index> <tag> - add a tag to a task");
         ui.printLine("");
         ui.printLine("clear - remove all tasks");
         ui.printLine("");
