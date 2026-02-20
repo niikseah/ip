@@ -27,7 +27,7 @@ public class DialogBox extends HBox {
 
     private static final Set<String> VALID_COMMANDS = Set.of(
             "bye", "list", "mark", "unmark", "todo", "deadline", "event", "delete", "find", "schedule",
-            "clear", "help", "tag");
+            "clear", "help", "tag", "organise");
 
     @FXML
     private VBox dialogWrapper;
@@ -100,6 +100,8 @@ public class DialogBox extends HBox {
                     firstWordText.setFill(Color.web("#F1C40F")); // Darker yellow for event
                 } else if (lowerFirstWord.equals("tag")) {
                     firstWordText.setFill(Color.web("#8E44AD")); // Purple for tag
+                } else if (lowerFirstWord.equals("organise")) {
+                    firstWordText.setFill(Color.web("#E67E22")); // Orange for organise
                 } else {
                     firstWordText.setFill(Color.BLACK);
                 }

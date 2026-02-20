@@ -5,6 +5,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Parses and executes user commands.
@@ -23,6 +26,7 @@ public class Parser {
     private static final int COMMAND_FIND_PREFIX_LENGTH = 5;
     private static final int COMMAND_SCHEDULE_PREFIX_LENGTH = 9;
     private static final int COMMAND_TAG_PREFIX_LENGTH = 4;
+    private static final int COMMAND_ORGANISE_PREFIX_LENGTH = 9;
     private static final int DISPLAY_INDEX_OFFSET = 1;
 
     /**
@@ -73,6 +77,8 @@ public class Parser {
             handleSchedule(normalized, tasks, ui);
         } else if (normalized.equalsIgnoreCase("tag") || normalized.startsWith("tag ")) {
             handleTag(normalized, tasks, ui, storage);
+        } else if (normalized.equalsIgnoreCase("organise") || normalized.startsWith("organise ")) {
+            handleOrganise(normalized, tasks, ui);
         } else if (normalized.toLowerCase().startsWith("help")) {
             getHelp(ui);
         } else {
@@ -442,6 +448,149 @@ public class Parser {
     }
 
     /**
+     * Handles the organise command to organize tasks by tag or deadline.
+     *
+     * @param input the user's input command (e.g. "organise tag" or "organise deadline")
+     * @param tasks the task list to organize
+     * @param ui the UI handler for output
+     * @throws ZiqException if the organize type is invalid
+     */
+    private static void handleOrganise(String input, TaskList tasks, Ui ui) throws ZiqException {
+        if (input.length() <= COMMAND_ORGANISE_PREFIX_LENGTH) {
+            throw new ZiqException("Organise needs a type. Correct format: organise tag or organise deadline");
+        }
+        String type = input.substring(COMMAND_ORGANISE_PREFIX_LENGTH).trim().toLowerCase();
+        if (type.isEmpty()) {
+            throw new ZiqException("Organise type cannot be empty. Correct format: organise tag or organise deadline");
+        }
+        if (type.equals("tag")) {
+            printTasksOrganisedByTag(tasks, ui);
+        } else if (type.equals("deadline")) {
+            printTasksOrganisedByDeadline(tasks, ui);
+        } else {
+            throw new ZiqException("Invalid organise type. Use 'organise tag' or 'organise deadline'");
+        }
+    }
+
+    /**
+     * Prints tasks organized by tag, grouping tasks with the same tag together.
+     *
+     * @param tasks the task list to organize
+     * @param ui the UI handler for output
+     */
+    private static void printTasksOrganisedByTag(TaskList tasks, Ui ui) {
+        if (tasks.isEmpty()) {
+            ui.printLine("you don't have anything on your list right now!");
+            return;
+        }
+        ArrayList<Task> taskList = tasks.getTaskList();
+        // Group tasks by tag
+        Map<String, ArrayList<Task>> tagGroups = new HashMap<>();
+        ArrayList<Task> untaggedTasks = new ArrayList<>();
+
+        for (Task task : taskList) {
+            String tag = task.getTag();
+            if (tag == null || tag.isEmpty()) {
+                untaggedTasks.add(task);
+            } else {
+                tagGroups.computeIfAbsent(tag, k -> new ArrayList<>()).add(task);
+            }
+        }
+
+        ui.printLine("tasks organized by tag:");
+        int displayNumber = DISPLAY_INDEX_OFFSET;
+
+        // Print tagged tasks grouped by tag
+        for (Map.Entry<String, ArrayList<Task>> entry : tagGroups.entrySet()) {
+            String tag = entry.getKey();
+            ArrayList<Task> taggedTasks = entry.getValue();
+            ui.printLine("");
+            ui.printLine("[" + tag + "]:");
+            for (Task task : taggedTasks) {
+                ui.printLine(displayNumber + ". " + task);
+                displayNumber++;
+            }
+        }
+
+        // Print untagged tasks
+        if (!untaggedTasks.isEmpty()) {
+            ui.printLine("");
+            ui.printLine("[untagged]:");
+            for (Task task : untaggedTasks) {
+                ui.printLine(displayNumber + ". " + task);
+                displayNumber++;
+            }
+        }
+    }
+
+    /**
+     * Prints tasks organized by deadline, sorting deadlines first, then events, then todos.
+     *
+     * @param tasks the task list to organize
+     * @param ui the UI handler for output
+     */
+    private static void printTasksOrganisedByDeadline(TaskList tasks, Ui ui) {
+        if (tasks.isEmpty()) {
+            ui.printLine("you don't have anything on your list right now!");
+            return;
+        }
+        ArrayList<Task> taskList = tasks.getTaskList();
+        // Separate tasks by type
+        ArrayList<Deadline> deadlines = new ArrayList<>();
+        ArrayList<Event> events = new ArrayList<>();
+        ArrayList<Task> todos = new ArrayList<>();
+
+        for (Task task : taskList) {
+            if (task instanceof Deadline) {
+                deadlines.add((Deadline) task);
+            } else if (task instanceof Event) {
+                events.add((Event) task);
+            } else {
+                todos.add(task);
+            }
+        }
+
+        // Sort deadlines by due date
+        deadlines.sort(Comparator.comparing(Deadline::by));
+
+        // Sort events by start date
+        events.sort(Comparator.comparing(Event::from));
+
+        ui.printLine("tasks organized by deadline:");
+        int displayNumber = DISPLAY_INDEX_OFFSET;
+
+        // Print deadlines
+        if (!deadlines.isEmpty()) {
+            ui.printLine("");
+            ui.printLine("deadlines:");
+            for (Deadline deadline : deadlines) {
+                ui.printLine(displayNumber + ". " + deadline);
+                displayNumber++;
+            }
+        }
+
+        // Print events
+        if (!events.isEmpty()) {
+            ui.printLine("");
+            ui.printLine("events:");
+            for (Event event : events) {
+                ui.printLine(displayNumber + ". " + event);
+                displayNumber++;
+            }
+        }
+
+        // Print todos
+        if (!todos.isEmpty()) {
+            ui.printLine("");
+            ui.printLine("todos:");
+            for (Task task : todos) {
+                ui.printLine(displayNumber + ". " + task);
+                displayNumber++;
+            }
+        }
+    }
+
+    /**
      * Prints all tasks in the task list.
      *
      * @param tasks the task list to print
@@ -565,6 +714,10 @@ public class Parser {
         ui.printLine("schedule DDMMYYYY - view tasks on a specific date (or DD, DDMM for partial)");
         ui.printLine("");
         ui.printLine("tag <index> <tag> - add a tag to a task");
+        ui.printLine("");
+        ui.printLine("organise tag - organize tasks by tag");
+        ui.printLine("");
+        ui.printLine("organise deadline - organize tasks by deadline");
         ui.printLine("");
         ui.printLine("clear - remove all tasks");
         ui.printLine("");
