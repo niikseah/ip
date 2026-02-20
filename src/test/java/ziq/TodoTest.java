@@ -19,21 +19,21 @@ public class TodoTest {
         Todo t = new Todo("read book");
         assertEquals("[T][ ] read book", t.toString());
         t.markAsDone();
-        assertEquals("[T][X] read book", t.toString());
+        assertEquals("[T][✅] read book", t.toString());
     }
 
     @Test
     public void todoStartsAsNotDone() {
         Todo t = new Todo("read book");
         assertEquals(" ", t.getStatus());
-        assertFalse(t.toString().contains("[X]"));
+        assertFalse(t.toString().contains("[✅]"));
     }
 
     @Test
     public void todoUnmark_clearsDoneStatus() {
         Todo t = new Todo("read book");
         t.markAsDone();
-        assertTrue(t.getStatus().equals("X"));
+        assertTrue(t.getStatus().equals("✅"));
         t.unmark();
         assertTrue(t.getStatus().equals(" "));
     }
@@ -56,7 +56,7 @@ public class TodoTest {
     public void todoHasSameDetailsAs_differentTaskType() {
         Todo t = new Todo("read book");
         java.time.LocalDateTime by = java.time.LocalDateTime.of(2022, 2, 22, 12, 0);
-        Deadline d = new Deadline("read book", by);
+        Deadline d = new Deadline("read book", by, true);
         assertFalse(t.hasSameDetailsAs(d));
     }
 
@@ -66,3 +66,4 @@ public class TodoTest {
         assertTrue(t.toString().contains("[T]"));
     }
 }
+

@@ -13,8 +13,14 @@ public class Todo extends Task {
         super(description);
     }
 
+    /**
+     * Returns a string representation of this todo task.
+     *
+     * @return a string in the format "[T][status] description"
+     */
     @Override
     public String toString() {
         return "[T]" + super.toString();
     }
 }
+

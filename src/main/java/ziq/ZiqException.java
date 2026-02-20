@@ -13,3 +13,4 @@ public class ZiqException extends Exception {
         super(message);
     }
 }
+

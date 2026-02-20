@@ -28,12 +28,12 @@ public class Task {
     }
 
     /**
-     * Returns the completion status as a string ("X" for done, " " for not done).
+     * Returns the completion status as a string ("✅" for done, " " for not done).
      *
-     * @return "X" if task is done, " " otherwise
+     * @return "✅" if task is done, " " otherwise
      */
     public String getStatus() {
-        return (isDone ? "X" : " ");
+        return (isDone ? "✅" : " ");
     }
 
     /**
@@ -68,8 +68,14 @@ public class Task {
         return description.equals(other.description);
     }
 
+    /**
+     * Returns a string representation of this task.
+     *
+     * @return a string in the format "[status] description"
+     */
     @Override
     public String toString() {
         return "[" + getStatus() + "] " + description;
     }
 }
+

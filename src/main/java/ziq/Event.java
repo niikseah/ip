@@ -40,6 +40,12 @@ public class Event extends Task {
         return this.to;
     }
 
+    /**
+     * Returns true if this event has the same description, start time, and end time as the other task.
+     *
+     * @param other the other task to compare
+     * @return true if both are events with the same description, start time, and end time
+     */
     @Override
     public boolean hasSameDetailsAs(Task other) {
         if (!(other instanceof Event)) {
@@ -49,6 +55,11 @@ public class Event extends Task {
         return description.equals(e.description) && from.equals(e.from) && to.equals(e.to);
     }
 
+    /**
+     * Returns a string representation of this event task.
+     *
+     * @return a string in the format "[E][status] description (from: formatted date/time to: formatted date/time)"
+     */
     @Override
     public String toString() {
         return "[E]" + super.toString()
@@ -56,3 +67,4 @@ public class Event extends Task {
                 + " to: " + to.format(Parser.OUTPUT_FORMAT) + ")";
     }
 }
+

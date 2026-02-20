@@ -56,11 +56,26 @@ public class Storage {
             return loadedTasks;
         }
 
+        // Check if file path points to a directory instead of a file
+        if (file.isDirectory()) {
+            throw new ZiqException("Save file path points to a directory, not a file: " + filePath
+                    + ". Please specify a valid file path.");
+        }
+
         try (Scanner s = new Scanner(file)) {
+            int lineNumber = 0;
             while (s.hasNext()) {
-                Task task = parseTaskFromLine(s.nextLine());
+                lineNumber++;
+                String line = s.nextLine();
+                if (line.trim().isEmpty()) {
+                    continue; // Skip empty lines
+                }
+                Task task = parseTaskFromLine(line);
                 if (task != null) {
                     loadedTasks.add(task);
+                } else {
+                    // Log warning about invalid line but continue loading
+                    ui.printLine("Warning: Skipped invalid line " + lineNumber + " in save file: " + filePath);
                 }
             }
         } catch (IOException e) {
@@ -130,7 +145,10 @@ public class Storage {
                     return null;
                 }
                 LocalDateTime deadlineTime = LocalDateTime.parse(parts[DEADLINE_TIME_INDEX]);
-                return new Deadline(parts[DESCRIPTION_INDEX], deadlineTime);
+                // If time is exactly midnight (00:00:00), assume no time was originally specified
+                boolean hasTime = !(deadlineTime.getHour() == 0 && deadlineTime.getMinute() == 0
+                        && deadlineTime.getSecond() == 0);
+                return new Deadline(parts[DESCRIPTION_INDEX], deadlineTime, hasTime);
             case EVENT:
                 if (parts.length < EVENT_PARTS_COUNT) {
                     return null;
@@ -150,11 +168,19 @@ public class Storage {
      * Saves the list of tasks to the storage file.
      *
      * @param list the list of tasks to save
+     * @throws ZiqException if there is an error saving the file
      */
     public void save(ArrayList<Task> list) throws ZiqException {
         assert list != null : "task list to save must not be null";
         try {
             File file = new File(filePath);
+
+            // Check if file path points to an existing directory
+            if (file.exists() && file.isDirectory()) {
+                throw new ZiqException("Cannot save: file path points to a directory: " + filePath
+                        + ". Please specify a valid file path.");
+            }
+
             File parent = file.getParentFile();
             if (parent != null && !parent.exists() && !parent.mkdirs()) {
                 throw new ZiqException("Could not create data folder. Check write permissions: " + parent.getPath());
@@ -166,6 +192,8 @@ public class Storage {
                 throw new ZiqException("Could not save tasks: access denied. Check file permissions for " + filePath);
             }
             throw new ZiqException("Could not save tasks to file: " + (msg != null ? msg : "unknown error"));
+        } catch (SecurityException e) {
+            throw new ZiqException("Could not save tasks: access denied. Check file permissions for " + filePath);
         }
     }
 
@@ -193,7 +221,7 @@ public class Storage {
      */
     private String formatTaskForSave(Task task) {
         TaskType type = determineTaskType(task);
-        String statusCode = task.getStatus().equals("X") ? DONE_STATUS_CODE : NOT_DONE_STATUS_CODE;
+        String statusCode = task.getStatus().equals("✅") ? DONE_STATUS_CODE : NOT_DONE_STATUS_CODE;
         StringBuilder line = new StringBuilder();
         line.append(type.getCode()).append(FILE_DELIMITER);
         line.append(statusCode).append(FILE_DELIMITER);
@@ -226,3 +254,4 @@ public class Storage {
         }
     }
 }
+

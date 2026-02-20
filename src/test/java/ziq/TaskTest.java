@@ -18,15 +18,15 @@ public class TaskTest {
     public void taskStartsAsNotDone() {
         Task t = new Todo("read book");
         assertEquals(" ", t.getStatus());
-        assertFalse(t.toString().contains("[X]"));
+        assertFalse(t.toString().contains("[✅]"));
     }
 
     @Test
     public void taskMarkAsDone_changesStatus() {
         Task t = new Todo("read book");
         t.markAsDone();
-        assertEquals("X", t.getStatus());
-        assertTrue(t.toString().contains("[X]"));
+        assertEquals("✅", t.getStatus());
+        assertTrue(t.toString().contains("[✅]"));
     }
 
     @Test
@@ -65,3 +65,4 @@ public class TaskTest {
         assertTrue(output.contains("read book"));
     }
 }
+

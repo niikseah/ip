@@ -13,8 +13,16 @@ import javafx.stage.Stage;
  */
 public class Main extends Application {
 
+    private static final double MIN_WINDOW_HEIGHT = 600.0;
+    private static final double MIN_WINDOW_WIDTH = 400.0;
+
     private Ziq ziq = new Ziq();
 
+    /**
+     * Starts the JavaFX application and sets up the GUI.
+     *
+     * @param stage the primary stage for the application
+     */
     @Override
     public void start(Stage stage) {
         try {
@@ -26,13 +34,14 @@ public class Main extends Application {
             MainWindow controller = fxmlLoader.getController();
             controller.setZiq(ziq);
             controller.setStage(stage);
-            stage.setTitle("Ziq");
+            stage.setTitle("ziq 🦍");
             stage.setResizable(true);
-            stage.setMinHeight(600.0);
-            stage.setMinWidth(400.0);
+            stage.setMinHeight(MIN_WINDOW_HEIGHT);
+            stage.setMinWidth(MIN_WINDOW_WIDTH);
             stage.show();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 }
+

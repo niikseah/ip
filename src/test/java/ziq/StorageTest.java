@@ -71,7 +71,7 @@ public class StorageTest {
         }
         ArrayList<Task> tasks = storage.load();
         assertEquals(1, tasks.size());
-        assertTrue(tasks.get(0).getStatus().equals("X"));
+        assertTrue(tasks.get(0).getStatus().equals("✅"));
     }
 
     @Test
@@ -166,7 +166,7 @@ public class StorageTest {
     public void save_deadlineTask_writesCorrectly() throws ZiqException, IOException {
         ArrayList<Task> tasks = new ArrayList<>();
         LocalDateTime by = LocalDateTime.of(2022, 2, 22, 12, 0);
-        tasks.add(new Deadline("submit", by));
+        tasks.add(new Deadline("submit", by, true));
         storage.save(tasks);
         String content = Files.readString(testFile.toPath());
         assertTrue(content.contains("D | 0 | submit"));
@@ -219,3 +219,4 @@ public class StorageTest {
         assertTrue(!content.contains("old"));
     }
 }
+

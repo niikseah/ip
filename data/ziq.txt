@@ -1,9 +1,1 @@
-T | 0 | borrow book
-D | 0 | return book | 2019-12-02T18:00
-T | 0 | Read
-D | 0 | return book | 2019-12-02T18:00
-E | 0 | lol | 2001-01-01T20:00 | 2001-01-01T10:00
-D | 0 | lol | 2001-01-01T18:00
 T | 0 | lol
-E | 0 | lol | 2001-01-18T18:00 | 2001-01-18T18:01
-T | 0 | submit assignment

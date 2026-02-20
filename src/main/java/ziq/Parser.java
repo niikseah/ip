@@ -14,7 +14,9 @@ public class Parser {
 
     public static final DateTimeFormatter OUTPUT_FORMAT = DateTimeFormatter.ofPattern("MMM dd yyyy, h:mm a");
     private static final DateTimeFormatter INPUT_FORMAT = DateTimeFormatter.ofPattern("d/M/yyyy HHmm");
-    private static final DateTimeFormatter DATE_ONLY_FORMAT = DateTimeFormatter.ofPattern("d/M/yyyy");
+    private static final DateTimeFormatter DEADLINE_INPUT_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HHmm");
+    private static final DateTimeFormatter DATE_ONLY_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final int COMMAND_TODO_PREFIX_LENGTH = 5;
     private static final int COMMAND_DEADLINE_PREFIX_LENGTH = 9;
     private static final int COMMAND_EVENT_PREFIX_LENGTH = 6;
     private static final int COMMAND_DELETE_PREFIX_LENGTH = 7;
@@ -39,8 +41,9 @@ public class Parser {
         assert storage != null : "storage must not be empty";
         String trimmedInput = input.trim();
         if (trimmedInput.isEmpty()) {
-            throw new ZiqException("Please enter a command. Enter 'help' for a list of commands.");
+            throw new ZiqException("command me now. enter 'help' for a list of commands.");
         }
+        // Normalize whitespace: replace multiple spaces/tabs with single space
         String normalized = trimmedInput.replaceAll("\\s+", " ");
 
         if (normalized.equalsIgnoreCase("bye")) {
@@ -49,6 +52,8 @@ public class Parser {
 
         if (normalized.equalsIgnoreCase("list")) {
             printTaskList(tasks, ui);
+        } else if (normalized.equalsIgnoreCase("clear")) {
+            handleClear(tasks, ui, storage);
         } else if (normalized.equalsIgnoreCase("mark") || normalized.startsWith("mark ")) {
             handleMark(normalized, tasks, ui, storage, true);
         } else if (normalized.equalsIgnoreCase("unmark") || normalized.startsWith("unmark ")) {
@@ -89,33 +94,58 @@ public class Parser {
         String cmd = isMark ? "mark" : "unmark";
         String[] parts = input.split(" ", 2);
         if (parts.length < 2 || parts[1].trim().isEmpty()) {
-            throw new ZiqException("Task number is missing. Correct format: " + cmd + " <number> (e.g. " + cmd + " 1). "
-                    + "Use 'list' to see task numbers.");
+            throw new ZiqException("task number is missing."
+                    + " enter 'list' to see task numbers.");
         }
         try {
             int taskNumber = Integer.parseInt(parts[1].trim());
             int index = taskNumber - DISPLAY_INDEX_OFFSET;
             if (index < 0 || taskNumber < 1) {
-                throw new ZiqException("Task number must be at least 1. Correct format: " + cmd + " <number>. "
-                        + "Use 'list' to see task numbers.");
+                throw new ZiqException("task number must be at least 1."
+                        + " enter 'list' to see task numbers.");
             }
             Task task = tasks.get(index);
+            boolean previousStatus = task.getStatus().equals("✅");
+            boolean alreadyInDesiredState = (isMark && previousStatus) || (!isMark && !previousStatus);
+
+            if (alreadyInDesiredState) {
+                if (isMark) {
+                    ui.printLine("this task has been marked!");
+                } else {
+                    ui.printLine("this task has been unmarked!");
+                }
+                ui.printLine("  " + task);
+                return;
+            }
 
             if (isMark) {
                 task.markAsDone();
-                ui.printLine("task marked as done:");
             } else {
                 task.unmark();
-                ui.printLine("task marked as not done:");
             }
-            ui.printLine("  " + task);
-            storage.save(tasks.getTaskList());
+            try {
+                storage.save(tasks.getTaskList());
+                if (isMark) {
+                    ui.printLine("task marked as done:");
+                } else {
+                    ui.printLine("task marked as not done:");
+                }
+                ui.printLine("  " + task);
+            } catch (ZiqException e) {
+                // Rollback: restore previous status if save failed
+                if (previousStatus) {
+                    task.markAsDone();
+                } else {
+                    task.unmark();
+                }
+                throw new ZiqException("Task status was changed but could not be saved: " + e.getMessage());
+            }
         } catch (IndexOutOfBoundsException e) {
-            throw new ZiqException("invalid task number. Correct format: " + cmd + " <number> (e.g. " + cmd + " 1). "
-                    + "Use 'list' to see task numbers.");
+            throw new ZiqException("invalid task number."
+                    + "enter 'list' to see task numbers.");
         } catch (NumberFormatException e) {
-            throw new ZiqException("Task number must be a number. Correct format: " + cmd + " <number> (e.g. " + cmd
-                    + " 1). Use 'list' to see task numbers.");
+            throw new ZiqException("task number must be a number."
+                    + " enter 'list' to see task numbers.");
         }
     }
 
@@ -129,14 +159,12 @@ public class Parser {
      * @throws ZiqException if the description is empty
      */
     private static void handleTodo(String input, TaskList tasks, Ui ui, Storage storage) throws ZiqException {
-        if (input.length() <= 5) {
-            throw new ZiqException("Description of task cannot be empty. Correct format: todo <description> "
-                    + "(e.g. todo read book)");
+        if (input.length() <= COMMAND_TODO_PREFIX_LENGTH) {
+            throw new ZiqException("description of task cannot be empty.");
         }
-        String description = input.substring(5).trim();
+        String description = input.substring(COMMAND_TODO_PREFIX_LENGTH).trim();
         if (description.isEmpty()) {
-            throw new ZiqException("Description of task cannot be empty. Correct format: todo <description> "
-                    + "(e.g. todo read book)");
+            throw new ZiqException("description of task cannot be empty.");
         }
         Task t = new Todo(description);
         addTaskAndSave(t, tasks, storage, ui);
@@ -153,32 +181,44 @@ public class Parser {
      */
     private static void handleDeadline(String input, TaskList tasks, Ui ui, Storage storage) throws ZiqException {
         if (!input.contains(" /by ")) {
-            throw new ZiqException("Deadline must have '/by' with date and time. Correct format: "
-                    + "deadline <description> /by d/M/yyyy HHmm (e.g. deadline submit report /by 2/22/2022 1200)");
+            throw new ZiqException("deadline must have '/by' with date. e.g."
+                    + "deadline <description> /by DD/MM/YYYY HHmm (e.g. deadline submit report /by 22/02/2022 1200)");
         }
         String commandBody = input.substring(COMMAND_DEADLINE_PREFIX_LENGTH).trim();
         String[] parts = commandBody.split(" /by ", -1);
         if (parts.length != 2) {
-            throw new ZiqException("Use exactly one '/by'. Correct format: "
-                    + "deadline <description> /by d/M/yyyy HHmm (e.g. deadline submit report /by 2/22/2022 1200)");
+            throw new ZiqException("deadline can only one '/by'. e.g."
+                    + "deadline <description> /by DD/MM/YYYY HHmm (e.g. deadline submit report /by 22/02/2022 1200)");
         }
         String description = parts[0].trim();
         String dateTimeStr = parts[1].trim();
         if (description.isEmpty()) {
-            throw new ZiqException("Description of deadline cannot be empty. Correct format: "
-                    + "deadline <description> /by d/M/yyyy HHmm");
+            throw new ZiqException("description of deadline cannot be empty. e.g."
+                    + "deadline <description> /by DD/MM/YYYY HHmm");
         }
         if (dateTimeStr.isEmpty()) {
-            throw new ZiqException("Deadline date and time cannot be empty. Correct format: "
-                    + "deadline <description> /by d/M/yyyy HHmm (e.g. /by 2/22/2022 1200)");
+            throw new ZiqException("deadline date cannot be empty. e.g."
+                    + "deadline <description> /by DD/MM/YYYY HHmm (e.g. /by 22/02/2022 1200)");
         }
         try {
-            LocalDateTime deadlineTime = LocalDateTime.parse(dateTimeStr, INPUT_FORMAT);
-            Task task = new Deadline(description, deadlineTime);
+            LocalDateTime deadlineTime;
+            boolean hasTime;
+            String[] dateTimeParts = dateTimeStr.split(" ", 2);
+            if (dateTimeParts.length == 2 && !dateTimeParts[1].trim().isEmpty()) {
+                // Has time component
+                deadlineTime = LocalDateTime.parse(dateTimeStr, DEADLINE_INPUT_FORMAT);
+                hasTime = true;
+            } else {
+                // Date only - set time to start of day (00:00)
+                LocalDate date = LocalDate.parse(dateTimeParts[0].trim(), DATE_ONLY_FORMAT);
+                deadlineTime = date.atTime(0, 0);
+                hasTime = false;
+            }
+            Task task = new Deadline(description, deadlineTime, hasTime);
             addTaskAndSave(task, tasks, storage, ui);
         } catch (DateTimeParseException e) {
-            throw new ZiqException("Invalid or non-existent date for deadline. Use d/M/yyyy HHmm "
-                    + "(e.g. 2/22/2022 1200). Feb 30 and similar invalid dates are not allowed.");
+            throw new ZiqException("invalid date for deadline. use dd/mm/yyyy HHmm. "
+                    + "(e.g. 22/02/2022 1200 or 22/02/2022). dates like Feb 30 are not allowed.");
         }
     }
 
@@ -193,39 +233,38 @@ public class Parser {
      */
     private static void handleEvent(String input, TaskList tasks, Ui ui, Storage storage) throws ZiqException {
         if (!input.contains(" /from ") || !input.contains(" /to ")) {
-            throw new ZiqException("Event must include '/from' and '/to' with date and time. Correct format: "
+            throw new ZiqException("event must include '/from' and '/to' with date and time. e.g."
                     + "event <description> /from d/M/yyyy HHmm /to d/M/yyyy HHmm "
                     + "(e.g. event meeting /from 2/22/2022 1200 /to 2/22/2022 1400)");
         }
         String commandBody = input.substring(COMMAND_EVENT_PREFIX_LENGTH).trim();
         String[] parts = commandBody.split(" /from | /to ", -1);
         if (parts.length != 3) {
-            throw new ZiqException("Use exactly one '/from' and one '/to'. Correct format: "
+            throw new ZiqException("event can only one '/from' and one '/to'. e.g."
                     + "event <description> /from d/M/yyyy HHmm /to d/M/yyyy HHmm");
         }
         String description = parts[0].trim();
         String fromStr = parts[1].trim();
         String toStr = parts[2].trim();
         if (description.isEmpty()) {
-            throw new ZiqException("Description of event cannot be empty. Correct format: "
+            throw new ZiqException("description of event cannot be empty. e.g."
                     + "event <description> /from d/M/yyyy HHmm /to d/M/yyyy HHmm");
         }
         if (fromStr.isEmpty() || toStr.isEmpty()) {
-            throw new ZiqException("Event must have both /from and /to dates. Correct format: "
+            throw new ZiqException("event must have both /from and /to dates. e.g."
                     + "event <description> /from d/M/yyyy HHmm /to d/M/yyyy HHmm");
         }
         try {
             LocalDateTime startTime = LocalDateTime.parse(fromStr, INPUT_FORMAT);
             LocalDateTime endTime = LocalDateTime.parse(toStr, INPUT_FORMAT);
             if (!startTime.isBefore(endTime)) {
-                throw new ZiqException("Event end time must be after start time. "
-                        + "Use /from <earlier> /to <later> (e.g. /from 2/22/2022 1200 /to 2/22/2022 1400).");
+                throw new ZiqException("event end time must be after start time.");
             }
             Task task = new Event(description, startTime, endTime);
             addTaskAndSave(task, tasks, storage, ui);
         } catch (DateTimeParseException e) {
-            throw new ZiqException("Invalid or non-existent date for event. Use d/M/yyyy HHmm. "
-                    + "Feb 30 and similar invalid dates are not allowed.");
+            throw new ZiqException("invalid date for event. use dd/mm/yyyy HHmm. "
+                    + "dates like Feb 30 are not allowed.");
         }
     }
 
@@ -243,27 +282,33 @@ public class Parser {
                 ? input.substring(COMMAND_DELETE_PREFIX_LENGTH).trim()
                 : "";
         if (taskNumberString.isEmpty()) {
-            throw new ZiqException("Task number is missing. Correct format: delete <number> (e.g. delete 1). "
-                    + "Use 'list' to see task numbers.");
+            throw new ZiqException("task number is missing."
+                    + " enter 'list' to see task numbers.");
         }
         try {
             int taskNumber = Integer.parseInt(taskNumberString);
             int index = taskNumber - DISPLAY_INDEX_OFFSET;
             if (index < 0 || taskNumber < 1) {
-                throw new ZiqException("Task number must be at least 1. Correct format: delete <number>. "
-                        + "Use 'list' to see task numbers.");
+                throw new ZiqException("task number must be at least 1."
+                        + " enter 'list' to see task numbers.");
             }
             Task removedTask = tasks.delete(index);
-            storage.save(tasks.getTaskList());
-            ui.printLine("task removed:");
-            ui.printLine("  " + removedTask);
-            ui.printLine("now you have " + tasks.size() + " task(s) in the list.");
+            try {
+                storage.save(tasks.getTaskList());
+                ui.printLine("task removed:");
+                ui.printLine("  " + removedTask);
+                ui.printLine("now you have " + tasks.size() + " task(s) in the list.");
+            } catch (ZiqException e) {
+                // Rollback: re-add the task if save failed
+                tasks.add(removedTask);
+                throw new ZiqException("task was deleted but could not be saved: " + e.getMessage());
+            }
         } catch (NumberFormatException e) {
-            throw new ZiqException("Task number must be a number. Correct format: delete <number> (e.g. delete 1). "
-                    + "Use 'list' to see task numbers.");
+            throw new ZiqException("task number must be a number. "
+                    + "enter 'list' to see task numbers.");
         } catch (IndexOutOfBoundsException e) {
-            throw new ZiqException("Invalid task number. Correct format: delete <number> (e.g. delete 1). "
-                    + "Use 'list' to see task numbers.");
+            throw new ZiqException("invalid task number. "
+                    + "enter 'list' to see task numbers.");
         }
     }
 
@@ -284,22 +329,25 @@ public class Parser {
 
     /**
      * Handles the schedule command to view tasks on a specific date.
+     * Supports partial dates: missing year/month/day defaults to current year/month/day.
      *
-     * @param input the user's input (e.g. "schedule 8/2/2026")
+     * @param input the user's input (e.g. "schedule 8/2/2026" or "schedule 22" or "schedule 22/02")
      * @param tasks the task list to search
      * @param ui the UI handler for output
      * @throws ZiqException if the date format is invalid
      */
     private static void handleSchedule(String input, TaskList tasks, Ui ui) throws ZiqException {
         if (input.length() <= COMMAND_SCHEDULE_PREFIX_LENGTH) {
-            throw new ZiqException("Schedule needs a date. Correct format: schedule d/M/yyyy (e.g. schedule 2/22/2022)");
+            throw new ZiqException("Schedule needs a date. Correct format: schedule DD/MM/YYYY "
+                    + "(e.g. schedule 22/02/2022 or schedule 22)");
         }
         String dateStr = input.substring(COMMAND_SCHEDULE_PREFIX_LENGTH).trim();
         if (dateStr.isEmpty()) {
-            throw new ZiqException("Schedule date cannot be empty. Correct format: schedule d/M/yyyy (e.g. schedule 2/22/2022)");
+            throw new ZiqException("Schedule date cannot be empty. Correct format: schedule DD/MM/YYYY "
+                    + "(e.g. schedule 22/02/2022 or schedule 22)");
         }
         try {
-            LocalDate date = LocalDate.parse(dateStr, DATE_ONLY_FORMAT);
+            LocalDate date = parsePartialDate(dateStr);
             ArrayList<Task> onDate = tasks.getTasksOnDate(date);
             ui.printLine("schedule for " + date.format(DateTimeFormatter.ofPattern("MMM dd yyyy")) + ":");
             if (onDate.isEmpty()) {
@@ -309,9 +357,40 @@ public class Parser {
                     ui.printLine((i + DISPLAY_INDEX_OFFSET) + ". " + onDate.get(i));
                 }
             }
-        } catch (DateTimeParseException e) {
-            throw new ZiqException("Invalid or non-existent date for schedule. Use d/M/yyyy (e.g. 2/22/2022). "
+        } catch (DateTimeParseException | NumberFormatException e) {
+            throw new ZiqException("Invalid date for schedule. Use DD, DD/MM, or DD/MM/YYYY "
+                    + "(e.g. schedule 22, schedule 22/02, or schedule 22/02/2022). "
                     + "Dates like Feb 30 are not allowed.");
+        }
+    }
+
+    /**
+     * Parses a partial date string, filling in missing parts with current date values.
+     * Supports formats: DD (day only), DD/MM (day/month), DD/MM/YYYY (full date).
+     *
+     * @param dateStr the date string to parse
+     * @return a LocalDate with missing parts filled from current date
+     * @throws DateTimeParseException if the date format is invalid
+     * @throws NumberFormatException if the date parts are not valid numbers
+     */
+    private static LocalDate parsePartialDate(String dateStr) throws DateTimeParseException, NumberFormatException {
+        LocalDate now = LocalDate.now();
+        String[] parts = dateStr.split("/");
+
+        if (parts.length == 1) {
+            // Only day provided - use current month and year
+            int day = Integer.parseInt(parts[0].trim());
+            return LocalDate.of(now.getYear(), now.getMonth(), day);
+        } else if (parts.length == 2) {
+            // Day and month provided - use current year
+            int day = Integer.parseInt(parts[0].trim());
+            int month = Integer.parseInt(parts[1].trim());
+            return LocalDate.of(now.getYear(), month, day);
+        } else if (parts.length == 3) {
+            // Full date provided
+            return LocalDate.parse(dateStr, DATE_ONLY_FORMAT);
+        } else {
+            throw new DateTimeParseException("Invalid date format", dateStr, 0);
         }
     }
 
@@ -322,6 +401,10 @@ public class Parser {
      * @param ui the UI handler for output
      */
     private static void printTaskList(TaskList tasks, Ui ui) {
+        if (tasks.isEmpty()) {
+            ui.printLine("you don't have anything on your list right now!");
+            return;
+        }
         ui.printLine("here is your to-do list!");
         for (int i = 0; i < tasks.size(); i++) {
             int displayNumber = i + DISPLAY_INDEX_OFFSET;
@@ -337,13 +420,24 @@ public class Parser {
      * @param ui the UI handler for output
      */
     private static void printMatchingTasks(TaskList tasks, String keyword, Ui ui) {
-        ui.printLine("here are the matching tasks in your list:");
         int matchCount = 0;
         for (int i = 0; i < tasks.size(); i++) {
             Task task = tasks.get(i);
             if (task.description().toLowerCase().contains(keyword)) {
                 matchCount++;
-                ui.printLine(matchCount + ". " + task);
+            }
+        }
+        if (matchCount == 0) {
+            ui.printLine("no matches found!");
+            return;
+        }
+        ui.printLine("here are the matching tasks in your list:");
+        int displayCount = 0;
+        for (int i = 0; i < tasks.size(); i++) {
+            Task task = tasks.get(i);
+            if (task.description().toLowerCase().contains(keyword)) {
+                displayCount++;
+                ui.printLine(displayCount + ". " + task);
             }
         }
     }
@@ -351,12 +445,13 @@ public class Parser {
     /**
      * Adds a task to the list, saves to storage, and prints confirmation.
      * Rejects duplicate tasks (same description and type-specific details).
+     * If save fails, the task is removed from the list to maintain consistency.
      *
      * @param task the task to add
      * @param tasks the task list to modify
      * @param storage the storage handler for saving
      * @param ui the UI handler for output
-     * @throws ZiqException if a task with the same details already exists
+     * @throws ZiqException if a task with the same details already exists or if save fails
      */
     private static void addTaskAndSave(Task task, TaskList tasks, Storage storage, Ui ui) throws ZiqException {
         if (tasks.containsDuplicateOf(task)) {
@@ -364,29 +459,71 @@ public class Parser {
                     + "Use a different description or date.");
         }
         tasks.add(task);
-        storage.save(tasks.getTaskList());
-        ui.printLine("task added:");
-        ui.printLine("  " + task);
-        ui.printLine("now you have " + tasks.size() + " task(s) in the list.");
+        try {
+            storage.save(tasks.getTaskList());
+            ui.printLine("task added:");
+            ui.printLine("  " + task);
+            ui.printLine("now you have " + tasks.size() + " task(s) in the list.");
+        } catch (ZiqException e) {
+            // Rollback: remove the task if save failed
+            tasks.getTaskList().remove(task);
+            throw new ZiqException("Task was added but could not be saved: " + e.getMessage());
+        }
     }
 
     /**
-     * Gives user a list of commands.
+     * Handles the clear command to remove all tasks from the list.
      *
-     * @return list of commands available
+     * @param tasks the task list to clear
+     * @param ui the UI handler for output
+     * @param storage the storage handler for saving tasks
+     * @throws ZiqException if there is an error saving after clearing
+     */
+    private static void handleClear(TaskList tasks, Ui ui, Storage storage) throws ZiqException {
+        int count = tasks.size();
+        ArrayList<Task> backup = new ArrayList<>(tasks.getTaskList());
+        tasks.clear();
+        try {
+            storage.save(tasks.getTaskList());
+            ui.printLine("all tasks cleared! (" + count + " task(s) removed)");
+        } catch (ZiqException e) {
+            // Rollback: restore tasks if save failed
+            tasks.getTaskList().addAll(backup);
+            throw new ZiqException("Tasks were cleared but could not be saved: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Displays a list of available commands to the user.
+     *
+     * @param ui the UI handler for output
      */
     private static void getHelp(Ui ui) {
         ui.printLine("here are the commands available:");
+        ui.printLine("---");
+        ui.printLine("");
         ui.printLine("todo <description> - add a todo task");
-        ui.printLine("deadline <description> /by <date> - add a deadline task");
+        ui.printLine("");
+        ui.printLine("deadline <description> /by DD/MM/YYYY HHmm - add a deadline task, time is optional");
+        ui.printLine("");
         ui.printLine("event <description> /from <date> /to <date> - add an event task");
+        ui.printLine("");
         ui.printLine("mark <index> - mark a task as done");
+        ui.printLine("");
         ui.printLine("unmark <index> - mark a task as not done");
+        ui.printLine("");
         ui.printLine("delete <index> - delete a task");
+        ui.printLine("");
         ui.printLine("find <keyword> - find tasks by keyword");
+        ui.printLine("");
         ui.printLine("schedule <date> - view tasks on a specific date");
+        ui.printLine("");
+        ui.printLine("clear - remove all tasks");
+        ui.printLine("");
         ui.printLine("help - display this list of commands");
+        ui.printLine("");
         ui.printLine("bye - terminate Ziq");
     }
 }
+
 

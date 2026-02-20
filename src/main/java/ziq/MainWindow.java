@@ -18,6 +18,10 @@ import javafx.util.Duration;
  */
 public class MainWindow extends AnchorPane {
 
+    private static final int DEFAULT_IMAGE_SIZE = 100;
+    private static final double SCROLL_BAR_HIDE_DELAY_SECONDS = 1.5;
+    private static final double SCROLL_PANE_MAX_VALUE = 1.0;
+
     @FXML
     private ScrollPane scrollPane;
     @FXML
@@ -35,15 +39,21 @@ public class MainWindow extends AnchorPane {
 
     private PauseTransition scrollBarHideTransition;
 
+    /**
+     * Loads an image from the resources folder.
+     *
+     * @param resourcePath the path to the image resource
+     * @return the loaded Image, or a blank image if loading fails
+     */
     private static Image loadImage(String resourcePath) {
         var stream = MainWindow.class.getResourceAsStream(resourcePath);
         if (stream == null) {
-            return new WritableImage(100, 100);
+            return new WritableImage(DEFAULT_IMAGE_SIZE, DEFAULT_IMAGE_SIZE);
         }
         try (stream) {
             return new Image(stream);
         } catch (Exception e) {
-            return new WritableImage(100, 100);
+            return new WritableImage(DEFAULT_IMAGE_SIZE, DEFAULT_IMAGE_SIZE);
         }
     }
 
@@ -54,7 +64,7 @@ public class MainWindow extends AnchorPane {
     public void initialize() {
         userImage = loadImage("/images/user.jpg");
         ziqImage = loadImage("/images/ziq.jpg");
-        dialogContainer.heightProperty().addListener((observable) -> scrollPane.setVvalue(1.0));
+        dialogContainer.heightProperty().addListener((observable) -> scrollPane.setVvalue(SCROLL_PANE_MAX_VALUE));
         dialogContainer.getChildren().add(DialogBox.getDukeDialog(
                 "hi, i'm ziq!\nplease give me a command!\nif you need help, enter 'help'.", ziqImage));
         setupScrollBarRevealOnScroll();
@@ -64,7 +74,7 @@ public class MainWindow extends AnchorPane {
      * Shows the scroll bar when the user scrolls with the mouse wheel, then hides it after a delay.
      */
     private void setupScrollBarRevealOnScroll() {
-        scrollBarHideTransition = new PauseTransition(Duration.seconds(1.5));
+        scrollBarHideTransition = new PauseTransition(Duration.seconds(SCROLL_BAR_HIDE_DELAY_SECONDS));
         scrollBarHideTransition.setOnFinished(e -> scrollPane.getStyleClass().remove("scrolling"));
         scrollPane.addEventFilter(ScrollEvent.SCROLL, e -> {
             if (!scrollPane.getStyleClass().contains("scrolling")) {
@@ -74,19 +84,28 @@ public class MainWindow extends AnchorPane {
         });
     }
 
-    /** Sets up Ziq instance. */
+    /**
+     * Sets the Ziq instance for this controller.
+     *
+     * @param z the Ziq instance to use
+     */
     public void setZiq(Ziq z) {
         ziq = z;
     }
 
-    /** Sets up the stage so the window can be closed on bye. */
+    /**
+     * Sets the stage so the window can be closed when the user says "bye".
+     *
+     * @param s the stage to control
+     */
     public void setStage(Stage s) {
         stage = s;
     }
 
     /**
-     * Creates two dialog boxes, one for user input and the other for Ziq's reply,
-     * Clears the user input after processing.
+     * Handles user input: creates dialog boxes for user input and Ziq's reply,
+     * and clears the input field after processing.
+     * Closes the window if the user says "bye".
      */
     @FXML
     private void handleUserInput() {
@@ -105,3 +124,4 @@ public class MainWindow extends AnchorPane {
         }
     }
 }
+

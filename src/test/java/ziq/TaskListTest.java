@@ -108,8 +108,8 @@ public class TaskListTest {
     @Test
     public void containsDuplicateOf_sameDeadline() {
         LocalDateTime by = LocalDateTime.of(2022, 2, 22, 12, 0);
-        taskList.add(new Deadline("submit", by));
-        Deadline duplicate = new Deadline("submit", by);
+        taskList.add(new Deadline("submit", by, true));
+        Deadline duplicate = new Deadline("submit", by, true);
         assertTrue(taskList.containsDuplicateOf(duplicate));
     }
 
@@ -117,8 +117,8 @@ public class TaskListTest {
     public void containsDuplicateOf_differentDeadlineTime() {
         LocalDateTime by1 = LocalDateTime.of(2022, 2, 22, 12, 0);
         LocalDateTime by2 = LocalDateTime.of(2022, 2, 22, 14, 0);
-        taskList.add(new Deadline("submit", by1));
-        Deadline different = new Deadline("submit", by2);
+        taskList.add(new Deadline("submit", by1, true));
+        Deadline different = new Deadline("submit", by2, true);
         assertFalse(taskList.containsDuplicateOf(different));
     }
 
@@ -144,7 +144,7 @@ public class TaskListTest {
     @Test
     public void getTasksOnDate_deadlineOnDate() {
         LocalDateTime by = LocalDateTime.of(2022, 2, 22, 12, 0);
-        taskList.add(new Deadline("submit", by));
+        taskList.add(new Deadline("submit", by, true));
         LocalDate date = LocalDate.of(2022, 2, 22);
         ArrayList<Task> onDate = taskList.getTasksOnDate(date);
         assertEquals(1, onDate.size());
@@ -154,7 +154,7 @@ public class TaskListTest {
     @Test
     public void getTasksOnDate_deadlineNotOnDate() {
         LocalDateTime by = LocalDateTime.of(2022, 2, 22, 12, 0);
-        taskList.add(new Deadline("submit", by));
+        taskList.add(new Deadline("submit", by, true));
         LocalDate date = LocalDate.of(2022, 2, 23);
         ArrayList<Task> onDate = taskList.getTasksOnDate(date);
         assertEquals(0, onDate.size());
@@ -204,8 +204,8 @@ public class TaskListTest {
         LocalDateTime by2 = LocalDateTime.of(2022, 2, 22, 10, 0);
         LocalDateTime from = LocalDateTime.of(2022, 2, 22, 12, 0);
         LocalDateTime to = LocalDateTime.of(2022, 2, 22, 13, 0);
-        taskList.add(new Deadline("late", by1));
-        taskList.add(new Deadline("early", by2));
+        taskList.add(new Deadline("late", by1, true));
+        taskList.add(new Deadline("early", by2, true));
         taskList.add(new Event("middle", from, to));
         LocalDate date = LocalDate.of(2022, 2, 22);
         ArrayList<Task> onDate = taskList.getTasksOnDate(date);
@@ -224,3 +224,4 @@ public class TaskListTest {
         assertEquals(2, list.size());
     }
 }
+

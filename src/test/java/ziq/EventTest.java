@@ -36,7 +36,7 @@ public class EventTest {
         assertTrue(e.toString().contains("[ ]"));
         assertTrue(e.toString().contains("meeting"));
         e.markAsDone();
-        assertTrue(e.toString().contains("[X]"));
+        assertTrue(e.toString().contains("[✅]"));
     }
 
     @Test
@@ -103,8 +103,9 @@ public class EventTest {
         LocalDateTime to = LocalDateTime.of(2022, 2, 22, 14, 0);
         Event e = new Event("meeting", from, to);
         e.markAsDone();
-        assertTrue(e.getStatus().equals("X"));
+        assertTrue(e.getStatus().equals("✅"));
         e.unmark();
         assertTrue(e.getStatus().equals(" "));
     }
 }
+

@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.AfterEach;
@@ -68,12 +67,12 @@ public class ParserTest {
     }
 
     @Test
-    public void executeCommand_todo_emptyDescription_throwsException() {
+    public void executeCommand_todoEmptyDescription_throwsException() {
         assertThrows(ZiqException.class, () -> Parser.executeCommand("todo", tasks, ui, storage));
     }
 
     @Test
-    public void executeCommand_todo_onlySpaces_throwsException() {
+    public void executeCommand_todoOnlySpaces_throwsException() {
         assertThrows(ZiqException.class, () -> Parser.executeCommand("todo   ", tasks, ui, storage));
     }
 
@@ -85,31 +84,32 @@ public class ParserTest {
 
     @Test
     public void executeCommand_deadline_addsTask() throws ZiqException {
-        Parser.executeCommand("deadline submit /by 22/2/2022 1200", tasks, ui, storage);
+        Parser.executeCommand("deadline submit /by 22/02/2022 1200", tasks, ui, storage);
         assertEquals(1, tasks.size());
         assertTrue(tasks.get(0) instanceof Deadline);
     }
 
     @Test
-    public void executeCommand_deadline_missingBy_throwsException() {
+    public void executeCommand_deadlineMissingBy_throwsException() {
         assertThrows(ZiqException.class, () -> Parser.executeCommand("deadline submit", tasks, ui, storage));
     }
 
     @Test
-    public void executeCommand_deadline_duplicateBy_throwsException() {
+    public void executeCommand_deadlineDuplicateBy_throwsException() {
         assertThrows(ZiqException.class, () -> Parser.executeCommand(
-                "deadline submit /by 22/2/2022 1200 /by 23/2/2022 1200", tasks, ui, storage));
+                "deadline submit /by 22/02/2022 1200 /by 23/02/2022 1200", tasks, ui, storage));
     }
 
     @Test
-    public void executeCommand_deadline_invalidDate_throwsException() {
+    public void executeCommand_deadlineInvalidDate_throwsException() {
         assertThrows(ZiqException.class, () -> Parser.executeCommand(
-                "deadline submit /by 32/1/2022 1200", tasks, ui, storage));
+                "deadline submit /by 32/01/2022 1200", tasks, ui, storage));
     }
 
     @Test
-    public void executeCommand_deadline_emptyDescription_throwsException() {
-        assertThrows(ZiqException.class, () -> Parser.executeCommand("deadline /by 22/2/2022 1200", tasks, ui, storage));
+    public void executeCommand_deadlineEmptyDescription_throwsException() {
+        assertThrows(ZiqException.class, () -> Parser.executeCommand(
+                "deadline /by 22/02/2022 1200", tasks, ui, storage));
     }
 
     @Test
@@ -120,25 +120,25 @@ public class ParserTest {
     }
 
     @Test
-    public void executeCommand_event_startAfterEnd_throwsException() {
+    public void executeCommand_eventStartAfterEnd_throwsException() {
         assertThrows(ZiqException.class, () -> Parser.executeCommand(
                 "event meeting /from 22/2/2022 1400 /to 22/2/2022 1200", tasks, ui, storage));
     }
 
     @Test
-    public void executeCommand_event_startEqualsEnd_throwsException() {
+    public void executeCommand_eventStartEqualsEnd_throwsException() {
         assertThrows(ZiqException.class, () -> Parser.executeCommand(
                 "event meeting /from 22/2/2022 1200 /to 22/2/2022 1200", tasks, ui, storage));
     }
 
     @Test
-    public void executeCommand_event_missingFrom_throwsException() {
+    public void executeCommand_eventMissingFrom_throwsException() {
         assertThrows(ZiqException.class, () -> Parser.executeCommand(
                 "event meeting /to 22/2/2022 1400", tasks, ui, storage));
     }
 
     @Test
-    public void executeCommand_event_duplicateFrom_throwsException() {
+    public void executeCommand_eventDuplicateFrom_throwsException() {
         assertThrows(ZiqException.class, () -> Parser.executeCommand(
                 "event meeting /from 22/2/2022 1200 /from 22/2/2022 1300 /to 22/2/2022 1400", tasks, ui, storage));
     }
@@ -147,17 +147,17 @@ public class ParserTest {
     public void executeCommand_mark_validIndex() throws ZiqException {
         tasks.add(new Todo("task"));
         Parser.executeCommand("mark 1", tasks, ui, storage);
-        assertTrue(tasks.get(0).getStatus().equals("X"));
+        assertTrue(tasks.get(0).getStatus().equals("✅"));
     }
 
     @Test
-    public void executeCommand_mark_missingNumber_throwsException() {
+    public void executeCommand_markMissingNumber_throwsException() {
         tasks.add(new Todo("task"));
         assertThrows(ZiqException.class, () -> Parser.executeCommand("mark", tasks, ui, storage));
     }
 
     @Test
-    public void executeCommand_mark_invalidIndex_throwsException() {
+    public void executeCommand_markInvalidIndex_throwsException() {
         tasks.add(new Todo("task"));
         // mark 0 is rejected before reaching TaskList.get (index < 1 check)
         assertThrows(ZiqException.class, () -> Parser.executeCommand("mark 0", tasks, ui, storage));
@@ -166,7 +166,7 @@ public class ParserTest {
     }
 
     @Test
-    public void executeCommand_mark_nonNumeric_throwsException() {
+    public void executeCommand_markNonNumeric_throwsException() {
         tasks.add(new Todo("task"));
         assertThrows(ZiqException.class, () -> Parser.executeCommand("mark abc", tasks, ui, storage));
     }
@@ -175,7 +175,7 @@ public class ParserTest {
     public void executeCommand_mark_normalizesSpaces() throws ZiqException {
         tasks.add(new Todo("task"));
         Parser.executeCommand("mark   1", tasks, ui, storage);
-        assertTrue(tasks.get(0).getStatus().equals("X"));
+        assertTrue(tasks.get(0).getStatus().equals("✅"));
     }
 
     @Test
@@ -194,13 +194,13 @@ public class ParserTest {
     }
 
     @Test
-    public void executeCommand_delete_missingNumber_throwsException() {
+    public void executeCommand_deleteMissingNumber_throwsException() {
         tasks.add(new Todo("task"));
         assertThrows(ZiqException.class, () -> Parser.executeCommand("delete", tasks, ui, storage));
     }
 
     @Test
-    public void executeCommand_delete_invalidIndex_throwsException() {
+    public void executeCommand_deleteInvalidIndex_throwsException() {
         tasks.add(new Todo("task"));
         assertThrows(ZiqException.class, () -> Parser.executeCommand("delete 0", tasks, ui, storage));
         assertThrows(ZiqException.class, () -> Parser.executeCommand("delete 2", tasks, ui, storage));
@@ -218,7 +218,7 @@ public class ParserTest {
     }
 
     @Test
-    public void executeCommand_find_emptyKeyword_listsAll() throws ZiqException {
+    public void executeCommand_findEmptyKeyword_listsAll() throws ZiqException {
         tasks.add(new Todo("task1"), new Todo("task2"));
         Parser.executeCommand("find", tasks, ui, storage);
         String output = outputStream.toString();
@@ -228,20 +228,20 @@ public class ParserTest {
     @Test
     public void executeCommand_schedule_validDate() throws ZiqException {
         LocalDateTime by = LocalDateTime.of(2022, 2, 22, 12, 0);
-        tasks.add(new Deadline("submit", by));
-        Parser.executeCommand("schedule 22/2/2022", tasks, ui, storage);
+        tasks.add(new Deadline("submit", by, true));
+        Parser.executeCommand("schedule 22/02/2022", tasks, ui, storage);
         String output = outputStream.toString();
         assertTrue(output.contains("schedule"));
         assertTrue(output.contains("submit"));
     }
 
     @Test
-    public void executeCommand_schedule_invalidDate_throwsException() {
+    public void executeCommand_scheduleInvalidDate_throwsException() {
         assertThrows(ZiqException.class, () -> Parser.executeCommand("schedule 32/1/2022", tasks, ui, storage));
     }
 
     @Test
-    public void executeCommand_schedule_missingDate_throwsException() {
+    public void executeCommand_scheduleMissingDate_throwsException() {
         assertThrows(ZiqException.class, () -> Parser.executeCommand("schedule", tasks, ui, storage));
     }
 
@@ -253,9 +253,9 @@ public class ParserTest {
 
     @Test
     public void executeCommand_duplicateDeadline_throwsException() throws ZiqException {
-        Parser.executeCommand("deadline submit /by 22/2/2022 1200", tasks, ui, storage);
+        Parser.executeCommand("deadline submit /by 22/02/2022 1200", tasks, ui, storage);
         assertThrows(ZiqException.class, () -> Parser.executeCommand(
-                "deadline submit /by 22/2/2022 1200", tasks, ui, storage));
+                "deadline submit /by 22/02/2022 1200", tasks, ui, storage));
     }
 
     @Test
@@ -266,6 +266,26 @@ public class ParserTest {
     }
 
     @Test
+    public void executeCommand_clear_removesAllTasks() throws ZiqException {
+        tasks.add(new Todo("task1"), new Todo("task2"), new Todo("task3"));
+        assertEquals(3, tasks.size());
+        Parser.executeCommand("clear", tasks, ui, storage);
+        assertEquals(0, tasks.size());
+        String output = outputStream.toString();
+        assertTrue(output.contains("all tasks cleared"));
+    }
+
+    @Test
+    public void executeCommand_clear_emptyList() throws ZiqException {
+        assertEquals(0, tasks.size());
+        Parser.executeCommand("clear", tasks, ui, storage);
+        assertEquals(0, tasks.size());
+        String output = outputStream.toString();
+        assertTrue(output.contains("all tasks cleared"));
+        assertTrue(output.contains("0 task(s) removed"));
+    }
+
+    @Test
     public void executeCommand_help_displaysCommands() throws ZiqException {
         Parser.executeCommand("help", tasks, ui, storage);
         String output = outputStream.toString();
@@ -273,6 +293,7 @@ public class ParserTest {
         assertTrue(output.contains("todo"));
         assertTrue(output.contains("deadline"));
         assertTrue(output.contains("event"));
+        assertTrue(output.contains("clear"));
     }
 
     private static class MockStorage extends Storage {
@@ -286,3 +307,4 @@ public class ParserTest {
         }
     }
 }
+

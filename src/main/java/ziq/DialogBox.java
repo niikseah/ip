@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Set;
 
-import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -27,7 +26,8 @@ import javafx.scene.text.TextFlow;
 public class DialogBox extends HBox {
 
     private static final Set<String> VALID_COMMANDS = Set.of(
-            "bye", "list", "mark", "unmark", "todo", "deadline", "event", "delete", "find", "schedule", "help");
+            "bye", "list", "mark", "unmark", "todo", "deadline", "event", "delete", "find", "schedule",
+            "clear", "help");
 
     @FXML
     private VBox dialogWrapper;
@@ -49,6 +49,7 @@ public class DialogBox extends HBox {
         setDialogContent(text, isUser);
         displayPicture.setImage(img);
         makeImageViewCircular(displayPicture);
+        dialogWrapper.heightProperty().addListener((o, oldVal, newVal) -> updateAlignment());
     }
 
     /**
@@ -67,6 +68,7 @@ public class DialogBox extends HBox {
 
     /**
      * Sets the dialog text. For user messages, colours the first word maroon if it is not a valid command.
+     * For help text (starts with "here are the commands"), formats with colors and spacing.
      */
     private void setDialogContent(String text, boolean isUser) {
         dialog.getChildren().clear();
@@ -91,9 +93,81 @@ public class DialogBox extends HBox {
                 dialog.getChildren().add(full);
             }
         } else {
-            Text full = new Text(text);
-            full.setFill(Color.WHITE);
-            dialog.getChildren().add(full);
+            if (text.startsWith("here are the commands")) {
+                formatHelpText(text);
+            } else {
+                Text full = new Text(text);
+                full.setFill(Color.WHITE);
+                dialog.getChildren().add(full);
+            }
+        }
+    }
+
+    /**
+     * Formats help text with colors: commands in cyan, parameters in yellow, descriptions in white.
+     * Adds spacing between commands.
+     */
+    private void formatHelpText(String text) {
+        String[] lines = text.split("\n");
+        boolean isFirstLine = true;
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i].trim();
+            if (line.isEmpty()) {
+                // Add spacing for empty lines
+                Text spacing = new Text("\n");
+                dialog.getChildren().add(spacing);
+                continue;
+            }
+
+            // Header line
+            if (line.startsWith("here are the commands")) {
+                Text header = new Text(line + "\n");
+                header.setFill(Color.WHITE);
+                dialog.getChildren().add(header);
+                isFirstLine = false;
+                continue;
+            }
+
+            // Command lines - format: "command <param> - description"
+            int dashIndex = line.indexOf(" - ");
+            if (dashIndex > 0) {
+                String beforeDash = line.substring(0, dashIndex).trim();
+                String afterDash = line.substring(dashIndex + 3).trim();
+
+                // Parse command and parameters
+                String[] parts = beforeDash.split(" ", 2);
+                String command = parts[0];
+                String params = parts.length > 1 ? " " + parts[1] : "";
+
+                // Command in cyan
+                Text cmdText = new Text(command);
+                cmdText.setFill(Color.CYAN);
+                dialog.getChildren().add(cmdText);
+
+                // Parameters in yellow
+                if (!params.isEmpty()) {
+                    Text paramText = new Text(params);
+                    paramText.setFill(Color.web("#FFD700")); // Gold/yellow
+                    dialog.getChildren().add(paramText);
+                }
+
+                // Separator and description in white
+                Text descText = new Text(" - " + afterDash);
+                descText.setFill(Color.WHITE);
+                dialog.getChildren().add(descText);
+            } else {
+                // Plain text line
+                Text plainText = new Text(line);
+                plainText.setFill(Color.WHITE);
+                dialog.getChildren().add(plainText);
+            }
+
+            // Add newline after each line (except last)
+            if (i < lines.length - 1) {
+                Text newline = new Text("\n");
+                dialog.getChildren().add(newline);
+            }
+            isFirstLine = false;
         }
     }
 
@@ -143,10 +217,24 @@ public class DialogBox extends HBox {
         getStyleClass().add("ziq-dialog");
     }
 
+    /**
+     * Creates a dialog box for user messages.
+     *
+     * @param text the user's message text
+     * @param img the user's avatar image
+     * @return a DialogBox configured for user messages
+     */
     public static DialogBox getUserDialog(String text, Image img) {
         return new DialogBox(text, img, true);
     }
 
+    /**
+     * Creates a dialog box for Ziq's messages.
+     *
+     * @param text Ziq's response text
+     * @param img Ziq's avatar image
+     * @return a DialogBox configured for Ziq's messages (flipped and styled)
+     */
     public static DialogBox getDukeDialog(String text, Image img) {
         DialogBox db = new DialogBox(text, img, false);
         db.flip();
@@ -154,3 +242,4 @@ public class DialogBox extends HBox {
         return db;
     }
 }
+

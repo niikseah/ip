@@ -59,6 +59,13 @@ public class TaskList {
     }
 
     /**
+     * Clears all tasks from the list.
+     */
+    public void clear() {
+        tasks.clear();
+    }
+
+    /**
      * Returns the list of all tasks.
      *
      * @return the list of tasks
@@ -76,7 +83,7 @@ public class TaskList {
      */
     public Task delete(int index) throws ZiqException {
         if (index < 0 || index >= tasks.size()) {
-            throw new ZiqException("task number does not exist. Use 'list' to see valid task numbers (e.g. delete 1).");
+            throw new ZiqException("task number does not exist. enter 'list' to see valid task numbers");
         }
         assert index >= 0 && index < tasks.size() : "index must be valid at this point";
         return tasks.remove(index);
@@ -106,6 +113,15 @@ public class TaskList {
     }
 
     /**
+     * Returns true if the list contains no tasks.
+     *
+     * @return true if the list is empty
+     */
+    public boolean isEmpty() {
+        return tasks.isEmpty();
+    }
+
+    /**
      * Returns tasks that fall on the given date (deadlines due that day, events that span that day),
      * sorted by time.
      *
@@ -120,6 +136,16 @@ public class TaskList {
         return new ArrayList<>(onDate);
     }
 
+    /**
+     * Checks if a task falls on the given date.
+     * For deadlines: checks if due date matches.
+     * For events: checks if the date falls within the event's time range.
+     * For todos: returns false (no date).
+     *
+     * @param task the task to check
+     * @param date the date to check against
+     * @return true if the task is on the given date
+     */
     private static boolean isTaskOnDate(Task task, LocalDate date) {
         if (task instanceof Deadline) {
             return ((Deadline) task).by().toLocalDate().equals(date);
@@ -131,6 +157,15 @@ public class TaskList {
         return false;
     }
 
+    /**
+     * Gets the time to use for sorting tasks in the schedule.
+     * For deadlines: returns the due date/time.
+     * For events: returns the start time.
+     * For todos: returns LocalDateTime.MIN (sorted first).
+     *
+     * @param task the task to get the schedule time for
+     * @return the LocalDateTime to use for sorting
+     */
     private static LocalDateTime getScheduleTime(Task task) {
         if (task instanceof Deadline) {
             return ((Deadline) task).by();
@@ -141,3 +176,4 @@ public class TaskList {
         return LocalDateTime.MIN;
     }
 }
+

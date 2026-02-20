@@ -52,3 +52,4 @@ public class TaskTypeTest {
         assertThrows(ZiqException.class, () -> TaskType.findTaskType(null));
     }
 }
+
