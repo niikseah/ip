@@ -6,7 +6,7 @@
 
 ziq is a user-friendly task management chatbot that helps you keep track of your todos, deadlines, and events. 
 
-> <span style="color:#0d6efd">**Commands**</span> · <span style="color:#b45309">**Parameters**</span>
+>
 
 ## Quick Start
 
