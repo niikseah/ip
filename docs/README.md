@@ -1,6 +1,8 @@
 # ziq user guide
 
-// Product screenshot goes here
+<p align="center">
+  <img src="Ui.png" width="400" alt="Product screenshot" />
+</p>
 
 ziq is a user-friendly task management chatbot that helps you keep track of your todos, deadlines, and events. 
 
@@ -15,7 +17,8 @@ ziq is a user-friendly task management chatbot that helps you keep track of your
 
 ### Adding Tasks
 
-#### Adding a Todo
+<details>
+<summary><strong>todo</strong> — Add a todo task</summary>
 
 Add a simple todo task without any date or time.
 
@@ -23,9 +26,10 @@ Add a simple todo task without any date or time.
 
 **Example:** `todo read book`
 
+</details>
 
-
-#### Adding a Deadline
+<details>
+<summary><strong>deadline</strong> — Add a deadline task</summary>
 
 Add a deadline task with a due date. Time is optional - if not specified, it defaults to midnight (00:00).
 
@@ -35,9 +39,10 @@ Add a deadline task with a due date. Time is optional - if not specified, it def
 - `deadline submit report /by 22022022 1200`
 - `deadline finish assignment /by 15032022`
 
+</details>
 
-
-#### Adding an Event
+<details>
+<summary><strong>event</strong> — Add an event task</summary>
 
 Add an event task with a start and end time.
 
@@ -45,19 +50,23 @@ Add an event task with a start and end time.
 
 **Example:** `event meeting /from 22022022 1200 /to 22022022 1400`
 
+</details>
+
 ### Viewing Tasks
 
-#### Listing All Tasks
+<details>
+<summary><strong>list</strong> — List all tasks</summary>
 
 View all tasks in your list.
 
 **Format:** `list`
 
-
+</details>
 
 ### Managing Tasks
 
-#### Marking a Task as Done
+<details>
+<summary><strong>mark</strong> — Mark a task as done</summary>
 
 Mark a task as completed.
 
@@ -65,7 +74,10 @@ Mark a task as completed.
 
 **Example:** `mark 1`
 
-#### Unmarking a Task
+</details>
+
+<details>
+<summary><strong>unmark</strong> — Mark a task as not done</summary>
 
 Mark a completed task as not done.
 
@@ -73,9 +85,10 @@ Mark a completed task as not done.
 
 **Example:** `unmark 1`
 
+</details>
 
-
-#### Deleting a Task
+<details>
+<summary><strong>delete</strong> — Remove a task</summary>
 
 Remove a task from your list.
 
@@ -83,15 +96,21 @@ Remove a task from your list.
 
 **Example:** `delete 2`
 
-#### Clearing All Tasks
+</details>
+
+<details>
+<summary><strong>clear</strong> — Remove all tasks</summary>
 
 Remove all tasks from your list at once.
 
 **Format:** `clear`
 
+</details>
+
 ### Finding Tasks
 
-#### Searching by Keyword
+<details>
+<summary><strong>find</strong> — Search tasks by keyword</summary>
 
 Find tasks that contain a specific keyword in their description.
 
@@ -99,11 +118,12 @@ Find tasks that contain a specific keyword in their description.
 
 **Example:** `find book`
 
-
+</details>
 
 ### Tagging Tasks
 
-#### Adding a Tag to a Task
+<details>
+<summary><strong>tag</strong> — Add a tag to a task</summary>
 
 Add a tag to any task (todo, deadline, or event) for better organization.
 
@@ -111,9 +131,12 @@ Add a tag to any task (todo, deadline, or event) for better organization.
 
 **Example:** `tag 1 work`
 
+</details>
+
 ### Organizing Tasks
 
-#### Organizing by Tag
+<details>
+<summary><strong>organise tag</strong> — Group tasks by tag</summary>
 
 Group and display tasks organized by their tags. Tasks with the same tag are grouped together, and untagged tasks are shown separately.
 
@@ -121,7 +144,10 @@ Group and display tasks organized by their tags. Tasks with the same tag are gro
 
 **Example:** `organise tag`
 
-#### Organizing by Deadline
+</details>
+
+<details>
+<summary><strong>organise deadline</strong> — Order tasks by deadline</summary>
 
 Display tasks organized by deadline, with deadlines sorted by due date, followed by events sorted by start date, and finally todos.
 
@@ -129,9 +155,12 @@ Display tasks organized by deadline, with deadlines sorted by due date, followed
 
 **Example:** `organise deadline`
 
+</details>
+
 ### Viewing Schedule
 
-#### Viewing Tasks on a Specific Date
+<details>
+<summary><strong>schedule</strong> — View tasks on a date</summary>
 
 View all tasks (deadlines and events) scheduled for a particular date.
 
@@ -139,19 +168,29 @@ View all tasks (deadlines and events) scheduled for a particular date.
 
 **Example:** `schedule 22022022` or `schedule 22` or `schedule 2202`
 
+</details>
+
 ### Getting Help
 
-#### Viewing Available Commands
+<details>
+<summary><strong>help</strong> — Show available commands</summary>
 
 Display a list of all available commands.
 
 **Format:** `help`
 
+</details>
+
+### Exiting the Application
+
+<details>
+<summary><strong>bye</strong> — Exit the application</summary>
+
+Close the application.
+
 **Format:** `bye`
 
-**Expected output:**
-
-
+</details>
 
 ## Command Summary
 
