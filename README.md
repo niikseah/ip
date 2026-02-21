@@ -12,7 +12,7 @@ ziq is a user-friendly task management chatbot that helps you keep track of your
   - **Gradle:** `./gradlew run` (or `gradlew.bat run` on Windows)
   - **Or** run the main class `ziq.Launcher` from your IDE.
 
-To build a runnable JAR: `./gradlew shadowJar` — the JAR will be at `build/libs/ziq.jar`.
+To build a runnable JAR: `./gradlew shadowJar` — the JAR will be at `build/libs/ziq.jar`. Built with Gradle.
 
 # ziq user guide
 
